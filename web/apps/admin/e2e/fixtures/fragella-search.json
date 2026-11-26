@@ -1,0 +1,83 @@
+[
+  {
+    "_id": "Lattafa-Khamrah",
+    "Name": "Khamrah",
+    "Brand": "Lattafa",
+    "founder": "",
+    "perfumers": "",
+    "Year": "2022",
+    "rating": "4.30",
+    "Country": "United Arab Emirates",
+    "Price": "39.99",
+    "Image URL": "https://cdn.fragella.com/images/lattafa-khamrah.jpg",
+    "Image URL Transparent": "https://cdn.fragella.com/images/lattafa-khamrah.webp",
+    "Gender": "unisex",
+    "Longevity": "Long Lasting",
+    "Sillage": "Strong",
+    "Popularity": "Very high",
+    "Price Value": "good_value",
+    "Confidence": "high",
+    "OilType": "Eau de Parfum",
+    "General Notes": ["cinnamon", "nutmeg", "bergamot", "dates", "praline", "tuberose", "vanilla", "tonka bean", "benzoin", "myrrh"],
+    "Main Accords": ["sweet", "warm spicy", "amber", "vanilla", "cinnamon"],
+    "Main Accords Percentage": {
+      "sweet": "Dominant",
+      "warm spicy": "Dominant",
+      "amber": "Prominent",
+      "vanilla": "Prominent",
+      "cinnamon": "Moderate"
+    },
+    "Notes": {
+      "Top": [
+        { "name": "Cinnamon", "imageUrl": "https://cdn.fragella.com/notes/cinnamon.jpg" },
+        { "name": "Nutmeg", "imageUrl": "https://cdn.fragella.com/notes/nutmeg.jpg" },
+        { "name": "Bergamot", "imageUrl": "https://cdn.fragella.com/notes/bergamot.jpg" }
+      ],
+      "Middle": [
+        { "name": "Dates", "imageUrl": "https://cdn.fragella.com/notes/dates.jpg" },
+        { "name": "Praline", "imageUrl": "https://cdn.fragella.com/notes/praline.jpg" },
+        { "name": "Tuberose", "imageUrl": "not a url" }
+      ],
+      "Base": [
+        { "name": "Vanilla", "imageUrl": "https://cdn.fragella.com/notes/vanilla.jpg" },
+        { "name": "Tonka Bean", "imageUrl": "https://cdn.fragella.com/notes/tonka-bean.jpg" },
+        { "name": "Benzoin", "imageUrl": "https://cdn.fragella.com/notes/benzoin.jpg" },
+        { "name": "Myrrh", "imageUrl": "https://cdn.fragella.com/notes/myrrh.jpg" }
+      ]
+    },
+    "Season Ranking": [
+      { "name": "winter", "score": 3.42 },
+      { "name": "fall", "score": 3.1 },
+      { "name": "spring", "score": 1.2 },
+      { "name": "summer", "score": 0.6 }
+    ],
+    "Occasion Ranking": [
+      { "name": "night out", "score": 3.3 },
+      { "name": "casual", "score": 2.6 },
+      { "name": "professional", "score": 1.4 }
+    ]
+  },
+  {
+    "_id": "Lattafa-Khamrah-Qahwa",
+    "Name": "Khamrah Qahwa",
+    "Brand": "Lattafa",
+    "perfumers": "Perfumer One; Perfumer Two; perfumer one",
+    "Year": "",
+    "Country": "Atlantis",
+    "Image URL": "https://cdn.fragella.com/images/lattafa-khamrah-qahwa.jpg",
+    "Gender": "Men",
+    "Longevity": "Very Long Lasting",
+    "Sillage": "Soft",
+    "OilType": "",
+    "General Notes": ["coffee", "cardamom", "praline", "vanilla", "coffee"],
+    "Main Accords": ["coffee", "sweet", "warm spicy"],
+    "Main Accords Percentage": { "coffee": "Dominant", "sweet": "Subtle" },
+    "Notes": { "Top": [], "Middle": [], "Base": [] },
+    "Season Ranking": [],
+    "Occasion Ranking": []
+  },
+  {
+    "Name": "Entry without an id is skipped",
+    "Brand": "Unknown"
+  }
+]

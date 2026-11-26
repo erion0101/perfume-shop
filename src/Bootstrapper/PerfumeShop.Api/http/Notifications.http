@@ -1,0 +1,139 @@
+### PerfumeShop – Notifications module: customer SMS, staff alert emails, notification log
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# In Development SMS and emails are written to the API console ("DEV SMS to …", "DEV EMAIL to …").
+# Messages are queued from events (Orders, Shipping, Payments) and sent by the "notifications-dispatch"
+# job every 30 s. Customer SMS queued between 22:00 and 08:00 (Kosovo time) wait until 08:00; OTP codes don't.
+# Admin edits templates and alert settings; Staff can read, preview and resend.
+
+@baseUrl = http://localhost:5080
+@api = {{baseUrl}}/api/admin/notifications
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+### Sign in
+# @name signIn
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+@token = {{signIn.response.body.$.accessToken}}
+
+
+################################################################################
+### 1. STAFF ALERTS (who gets them, which are on) – set this first
+################################################################################
+
+### Current settings (recipients are empty after the first start)
+GET {{api}}/settings/staff-alerts
+Authorization: Bearer {{token}}
+
+### Recipients + alerts: new order, failed fiscal receipt, low stock (daily), unpaid deliveries (daily), job failures
+PUT {{api}}/settings/staff-alerts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "recipients": ["owner@example.com", "staff@example.com"],
+  "newOrder": true,
+  "failedReceipt": true,
+  "lowStock": true,
+  "unpaidDeliveries": true,
+  "jobFailures": true
+}
+
+### Invalid email → 400
+PUT {{api}}/settings/staff-alerts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "recipients": ["not-an-email"] }
+
+
+################################################################################
+### 2. TEMPLATES
+################################################################################
+
+### All templates: placeholders with sample values, SMS encoding + segments (with and without ë→e / ç→c)
+GET {{api}}/templates
+Authorization: Bearer {{token}}
+
+### One template
+GET {{api}}/templates/order-placed
+Authorization: Bearer {{token}}
+
+### Preview the saved text with sample data (nothing is saved or sent)
+POST {{api}}/templates/shipment-handed-over/preview
+Authorization: Bearer {{token}}
+
+### Preview a draft: without transliteration ë forces Unicode → 70 chars per SMS → "warning" with the segment count
+POST {{api}}/templates/order-placed/preview
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "body": "{{shopName}}: Porosia {{orderNumber}} u pranua. Totali {{total}} EUR, paguani në dorëzim. Do t'ju telefonojmë për konfirmim.",
+  "transliterate": false,
+  "values": { "total": "129.70" }
+}
+
+### Unknown placeholder → 400 Notifications.Template.UnknownPlaceholder (lists the allowed ones)
+PUT {{api}}/templates/order-confirmed
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "body": "Porosia {{orderNumber}} u konfirmua. IBAN: {{iban}}", "transliterate": true, "isEnabled": true }
+
+### Edit a template (Admin). Only new messages use the new text.
+PUT {{api}}/templates/order-confirmed
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "body": "{{shopName}}: Porosia {{orderNumber}} u konfirmua. Do t'ju njoftojmë kur të niset. Pyetje: {{shopPhone}}",
+  "transliterate": true,
+  "isEnabled": true
+}
+
+### Staff email template (subject + body)
+PUT {{api}}/templates/staff-low-stock
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "subject": "Stok i ulët: {{count}} produkte ({{date}})",
+  "body": "Këto produkte janë në ose nën kufirin e stokut ({{date}}):\n\n{{items}}",
+  "isEnabled": true
+}
+
+
+################################################################################
+### 3. NOTIFICATION LOG (place an order with Orders.http first)
+################################################################################
+
+### Latest messages (filters: status Queued|Sent|Failed, channel Sms|Email, templateKey, recipient, orderNumber, from, to)
+# @name messages
+GET {{api}}/messages?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+### Everything sent for one order
+GET {{api}}/messages?orderNumber=PS-2026-000001
+Authorization: Bearer {{token}}
+
+### SMS waiting for the end of quiet hours / retries
+GET {{api}}/messages?status=Queued&channel=Sms
+Authorization: Bearer {{token}}
+
+### Failed messages (all 5 attempts failed: 1 min, 5 min, 30 min, 2 h apart)
+# @name failed
+GET {{api}}/messages?status=Failed
+Authorization: Bearer {{token}}
+
+### One message with every attempt and the provider's raw response
+GET {{api}}/messages/{{messages.response.body.$.items[0].id}}
+Authorization: Bearer {{token}}
+
+### Resend a failed message (same text, new attempts; customer SMS still respect quiet hours). Not failed → 409.
+POST {{api}}/messages/{{failed.response.body.$.items[0].id}}/resend
+Authorization: Bearer {{token}}

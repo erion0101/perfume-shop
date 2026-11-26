@@ -1,0 +1,26 @@
+{
+  "name": "@perfumeshop/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "openapi-typescript openapi.json -o src/schema.d.ts",
+    "fetch-schema": "node scripts/fetch-schema.mjs",
+    "regenerate": "pnpm fetch-schema && pnpm generate",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "@perfumeshop/config": "workspace:*",
+    "eslint": "^10.15.0",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~6.0.3"
+  }
+}

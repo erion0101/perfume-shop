@@ -1,0 +1,35 @@
+/*
+ * Shared Tailwind v4 theme ("preset") for storefront and admin.
+ * Import after `@import "tailwindcss";` in each app's main CSS file.
+ * Semantic tokens follow shadcn/ui naming (background, primary, muted, destructive, ...).
+ * TODO: final brand palette and typography (storefront).
+ */
+@theme {
+  --color-brand-50: oklch(0.98 0.02 85);
+  --color-brand-100: oklch(0.95 0.04 85);
+  --color-brand-500: oklch(0.72 0.12 80);
+  --color-brand-700: oklch(0.52 0.1 70);
+  --color-brand-900: oklch(0.3 0.05 60);
+  --color-oud: oklch(0.25 0.03 40);
+
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.2 0.01 60);
+  --color-card: oklch(1 0 0);
+  --color-muted: oklch(0.97 0.005 80);
+  --color-muted-foreground: oklch(0.48 0.01 60);
+  --color-border: oklch(0.91 0.01 80);
+  --color-input: oklch(0.88 0.01 80);
+  --color-ring: oklch(0.52 0.1 70);
+  --color-primary: oklch(0.25 0.03 40);
+  --color-primary-foreground: oklch(0.98 0.01 85);
+  --color-secondary: oklch(0.95 0.04 85);
+  --color-secondary-foreground: oklch(0.25 0.03 40);
+  --color-destructive: oklch(0.55 0.2 27);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-success: oklch(0.55 0.13 150);
+  --color-warning: oklch(0.72 0.15 75);
+
+  --radius-md: 0.5rem;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}

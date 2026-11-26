@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Internal implementation of the Customers module (customers + identity schemas).
+    Allowed references: Shared.* and other modules' .Contracts projects ONLY.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Infrastructure\PerfumeShop.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\PerfumeShop.Modules.Customers.Contracts\PerfumeShop.Modules.Customers.Contracts.csproj" />
+    <ProjectReference Include="..\..\Notifications\PerfumeShop.Modules.Notifications.Contracts\PerfumeShop.Modules.Notifications.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PerfumeShop.Modules.Customers.Tests" />
+  </ItemGroup>
+</Project>

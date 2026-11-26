@@ -1,0 +1,176 @@
+### PerfumeShop – Inventory module (Admin or Staff)
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Works with the VS Code "REST Client" extension and Visual Studio's .http editor.
+# Run top to bottom. You need at least one fragrance with a variant (see Catalog.http).
+# Reservations, commits and releases are done by Orders through IInventoryApi, not over HTTP;
+# their effect shows up below in "open reservations", the movement history and batch tracing.
+
+@baseUrl = http://localhost:5080
+@inventory = {{baseUrl}}/api/admin/inventory
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+### Sign in (Auth:SeedAdmin). Access tokens live 15 minutes.
+# @name signIn
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+@token = {{signIn.response.body.$.accessToken}}
+
+### Pick a fragrance from the catalog (admin list includes drafts)
+# @name fragrances
+GET {{baseUrl}}/api/admin/catalog/fragrances?page=1&pageSize=1
+Authorization: Bearer {{token}}
+
+### …and its first variant
+# @name fragrance
+GET {{baseUrl}}/api/admin/catalog/fragrances/{{fragrances.response.body.$.items[0].id}}
+Authorization: Bearer {{token}}
+
+@variantId = {{fragrance.response.body.$.variants[0].id}}
+
+
+################################################################################
+### GOODS RECEIPT — one supplier invoice, one batch per line (proof of authenticity)
+################################################################################
+
+### Receive stock. Batch code and invoice number are required; dates cannot be in the future.
+# @name receipt
+POST {{inventory}}/receipts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "supplierName": "Lattafa Distribution FZE",
+  "supplierInvoiceNumber": "INV-2026-0142",
+  "supplierInvoiceDate": "2026-11-18",
+  "receivedOn": "2026-11-20",
+  "lines": [
+    { "variantId": "{{variantId}}", "batchCode": "B2391", "quantity": 12, "unitCost": 18.50 },
+    { "variantId": "{{variantId}}", "batchCode": "B2392", "quantity": 6, "unitCost": 18.50 }
+  ]
+}
+
+@batchId = {{receipt.response.body.$.batches[0].batchId}}
+
+### Missing batch code / invoice number → 400 ValidationProblem
+POST {{inventory}}/receipts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "supplierName": "Lattafa Distribution FZE",
+  "supplierInvoiceNumber": "",
+  "supplierInvoiceDate": "2026-11-18",
+  "receivedOn": "2026-11-20",
+  "lines": [
+    { "variantId": "{{variantId}}", "batchCode": "", "quantity": 1, "unitCost": 18.50 }
+  ]
+}
+
+### Unknown variant → 404 Inventory.Variant.NotFound
+POST {{inventory}}/receipts
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "supplierName": "Lattafa Distribution FZE",
+  "supplierInvoiceNumber": "INV-2026-0143",
+  "supplierInvoiceDate": "2026-11-18",
+  "receivedOn": "2026-11-20",
+  "lines": [
+    { "variantId": "00000000-0000-0000-0000-000000000001", "batchCode": "X1", "quantity": 1, "unitCost": 1.00 }
+  ]
+}
+
+
+################################################################################
+### ADJUSTMENTS — always with a reason; never below what is reserved for orders
+################################################################################
+
+### Remove a broken bottle (oldest batch first, or name "batchId")
+POST {{inventory}}/items/{{variantId}}/adjustments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": -1,
+  "reason": "Shishe e thyer gjatë shkarkimit"
+}
+
+### Put a unit back into a named batch (cannot exceed what that invoice delivered)
+POST {{inventory}}/items/{{variantId}}/adjustments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 1,
+  "reason": "Gjetur gjatë inventarizimit",
+  "batchId": "{{batchId}}"
+}
+
+### Adding without a batch → 400 Inventory.Adjustment.BatchRequired
+POST {{inventory}}/items/{{variantId}}/adjustments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 5,
+  "reason": "No invoice"
+}
+
+
+################################################################################
+### LEVELS
+################################################################################
+
+### Low-stock threshold for this variant ("low" when available ≤ threshold; default 3)
+PUT {{inventory}}/items/{{variantId}}/threshold
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "lowStockThreshold": 5
+}
+
+### All stock, lowest available first
+GET {{inventory}}/items?page=1&pageSize=50
+Authorization: Bearer {{token}}
+
+### Only low stock
+GET {{inventory}}/items?lowStock=true
+Authorization: Bearer {{token}}
+
+### Only out of stock
+GET {{inventory}}/items?outOfStock=true
+Authorization: Bearer {{token}}
+
+### One variant: levels, batches (with invoices), open reservations and the movement history
+GET {{inventory}}/items/{{variantId}}
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### TRACEABILITY — which invoice a batch came from and which orders received it
+################################################################################
+
+### Trace a batch code
+GET {{inventory}}/batches?code=B2391
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### STOREFRONT EFFECT — the public product page now says "inStock": true (if published)
+################################################################################
+
+### Public product page
+GET {{baseUrl}}/api/catalog/fragrances/{{fragrance.response.body.$.slug}}
+
+### No token → 401
+GET {{inventory}}/items

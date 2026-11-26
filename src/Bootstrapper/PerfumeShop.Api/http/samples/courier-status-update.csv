@@ -1,0 +1,5 @@
+tracking_number;status;note
+PK2026000001XK;Dorëzuar;Pranoi vetë klienti
+PK2026000002XK;Refuzuar;"Klienti nuk ishte në shtëpi; refuzoi në telefon"
+PK2026000003XK;Në rrugë;
+PK2026999999XK;Delivered;tracking number we do not know

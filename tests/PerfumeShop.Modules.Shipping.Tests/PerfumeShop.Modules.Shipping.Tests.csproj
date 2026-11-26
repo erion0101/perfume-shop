@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\PerfumeShop.Testing\PerfumeShop.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Shipping\PerfumeShop.Modules.Shipping\PerfumeShop.Modules.Shipping.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The sample courier files in the repo are tested so they always match what the parser accepts. -->
+    <None Include="..\..\src\Bootstrapper\PerfumeShop.Api\http\samples\*.csv" Link="Samples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

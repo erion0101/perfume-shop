@@ -1,0 +1,17 @@
+{
+  "extends": "@perfumeshop/config/tsconfig/vite.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "e2e",
+    "playwright.config.ts"
+  ]
+}

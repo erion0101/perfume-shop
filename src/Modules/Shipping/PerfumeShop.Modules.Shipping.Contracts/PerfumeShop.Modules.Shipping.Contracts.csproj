@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Public surface of the Shipping module: interfaces, DTOs and integration events. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>

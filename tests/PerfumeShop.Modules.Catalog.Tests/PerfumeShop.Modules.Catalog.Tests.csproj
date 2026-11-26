@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\PerfumeShop.Testing\PerfumeShop.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\PerfumeShop.Modules.Catalog\PerfumeShop.Modules.Catalog.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Fragella\Samples\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Internal implementation of the Payments module (Cash on Delivery + fiscal receipts).
+    Allowed references: Shared.* and other modules' .Contracts projects ONLY.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Infrastructure\PerfumeShop.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\PerfumeShop.Modules.Payments.Contracts\PerfumeShop.Modules.Payments.Contracts.csproj" />
+    <ProjectReference Include="..\..\Orders\PerfumeShop.Modules.Orders.Contracts\PerfumeShop.Modules.Orders.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shipping\PerfumeShop.Modules.Shipping.Contracts\PerfumeShop.Modules.Shipping.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PerfumeShop.Modules.Payments.Tests" />
+  </ItemGroup>
+</Project>

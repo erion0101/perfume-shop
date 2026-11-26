@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Internal implementation of the Catalog module.
+    Allowed references: Shared.* and other modules' .Contracts projects ONLY.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Infrastructure\PerfumeShop.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\PerfumeShop.Modules.Catalog.Contracts\PerfumeShop.Modules.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\Inventory\PerfumeShop.Modules.Inventory.Contracts\PerfumeShop.Modules.Inventory.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PerfumeShop.Modules.Catalog.Tests" />
+  </ItemGroup>
+</Project>

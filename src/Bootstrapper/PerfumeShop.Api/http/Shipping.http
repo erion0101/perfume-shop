@@ -1,0 +1,274 @@
+### PerfumeShop – Shipping module: couriers, parcels, courier files, COD settlement
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Works with the VS Code "REST Client" extension (Visual Studio's .http editor does not support "< file" bodies).
+# Run top to bottom. You need CONFIRMED orders: run Orders.http steps 1-4, then confirm two orders there
+# (or use the confirm request below). Shipping now owns courier + tracking: ship, deliver, refuse here.
+# Sample courier files: ./samples/*.csv (see samples/README.md).
+
+@baseUrl = http://localhost:5080
+@api = {{baseUrl}}/api/admin/shipping
+@adminEmail = you@example.com
+@adminPassword = change-me
+# Your own tracking numbers (the courier's waybill numbers); must be unique.
+@tracking1 = PK2026000001XK
+@tracking2 = PK2026000002XK
+
+### Sign in (Admin configures couriers; Admin or Staff do the rest)
+# @name signIn
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+@token = {{signIn.response.body.$.accessToken}}
+
+
+################################################################################
+### 1. COURIERS (Admin)
+################################################################################
+
+### Create a courier. Must accept flammable goods (perfume = UN1266, class 3) to be selectable.
+# @name courier
+POST {{api}}/couriers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Posta e Kosovës",
+  "contactName": "Zyra e porosive",
+  "contactPhone": "+383 38 000 000",
+  "contactEmail": "porosi@example.com",
+  "enabledCountries": ["XK"],
+  "deliveryFee": 2.50,
+  "codFeeFixed": 1.00,
+  "codFeePercent": 1.00,
+  "acceptsFlammableGoods": true,
+  "remittanceSchedule": "Weekly",
+  "remittanceDays": 7,
+  "notes": "Merr pakot çdo ditë në 14:00",
+  "isEnabled": true
+}
+
+@courierId = {{courier.response.body.$.id}}
+
+### A courier that does not take flammables (not selectable: "isSelectable": false)
+POST {{api}}/couriers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Express Docs Only",
+  "enabledCountries": ["XK"],
+  "deliveryFee": 2.00, "codFeeFixed": 0, "codFeePercent": 0,
+  "acceptsFlammableGoods": false,
+  "remittanceSchedule": "Daily", "remittanceDays": 2,
+  "isEnabled": true
+}
+
+### List couriers (Staff can read)
+GET {{api}}/couriers
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 2. A SHIPMENT FOR A CONFIRMED ORDER
+################################################################################
+
+### Confirmed orders waiting to be shipped
+# @name confirmed
+GET {{baseUrl}}/api/admin/orders?status=Confirmed&pageSize=2
+Authorization: Bearer {{token}}
+
+@orderId = {{confirmed.response.body.$.items[0].id}}
+@orderTotal = {{confirmed.response.body.$.items[0].total}}
+@order2Id = {{confirmed.response.body.$.items[1].id}}
+
+### Create the shipment → the order becomes Shipped (stock leaves, oldest batch first)
+# @name shipment
+POST {{api}}/shipments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "orderId": "{{orderId}}", "courierId": "{{courierId}}", "trackingNumber": "{{tracking1}}", "parcelCount": 1, "weightGrams": 450, "note": "Thirrni para se të vini" }
+
+@shipmentId = {{shipment.response.body.$.id}}
+
+### Same request again → 200 with the same shipment (no double booking)
+POST {{api}}/shipments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "orderId": "{{orderId}}", "courierId": "{{courierId}}", "trackingNumber": "{{tracking1}}", "parcelCount": 1, "weightGrams": 450 }
+
+### Packing slip (printable HTML, goes into the parcel): lines, batch codes, COD amount, "Hape pakon para se të paguash"
+GET {{api}}/shipments/{{shipmentId}}/packing-slip
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 3. DAILY HANDOVER TO THE COURIER
+################################################################################
+
+# Every parcel needs an ISSUED fiscal sale receipt (Payments issues it ~30 s after the shipment is created).
+# The manifest flags parcels without one ("Kupon fiskal: PA KUPON (Failed)") and the handover is refused (409)
+# unless staff override with a reason (logged, stored on the shipment).
+
+### Manifest as printable HTML (all parcels waiting for this courier up to today, Kosovo time)
+GET {{api}}/couriers/{{courierId}}/manifest
+Authorization: Bearer {{token}}
+
+### Manifest as CSV for the courier (semicolon, UTF-8 BOM: opens correctly in Excel)
+GET {{api}}/couriers/{{courierId}}/manifest?format=csv
+Authorization: Bearer {{token}}
+
+### The courier picked them up → HandedOver (409 Shipping.Shipment.ReceiptMissing if a receipt is not issued)
+POST {{api}}/couriers/{{courierId}}/handover
+Authorization: Bearer {{token}}
+
+### Only if a receipt really cannot be issued now: hand over anyway, with a reason (logged per parcel)
+POST {{api}}/couriers/{{courierId}}/handover
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "overrideMissingReceipt": true, "overrideReason": "Shërbimi fiskal nuk punon; kuponi lëshohet sot pasdite" }
+
+
+################################################################################
+### 4. COURIER STATUS FILE (CSV)
+################################################################################
+
+### Delivered (inline CSV with your tracking number)
+POST {{api}}/couriers/{{courierId}}/status-imports
+Authorization: Bearer {{token}}
+Content-Type: text/csv
+
+tracking_number;status;note
+{{tracking1}};Dorëzuar;Pranoi vetë klienti
+
+### The same file again → "replayed": true, nothing applied twice
+POST {{api}}/couriers/{{courierId}}/status-imports
+Authorization: Bearer {{token}}
+Content-Type: text/csv
+
+tracking_number;status;note
+{{tracking1}};Dorëzuar;Pranoi vetë klienti
+
+### The sample file from the repo: per line Applied / AlreadyApplied / UnknownTracking / InvalidTransition
+POST {{api}}/couriers/{{courierId}}/status-imports
+Authorization: Bearer {{token}}
+Content-Type: text/csv
+
+< ./samples/courier-status-update.csv
+
+
+################################################################################
+### 5. COD SETTLEMENT: the courier's remittance statement (CSV)
+################################################################################
+
+### Statement with the exact amount → Matched, order becomes CashCollected
+# @name settlement
+POST {{api}}/couriers/{{courierId}}/settlements?reference=POSTA-2026-W48
+Authorization: Bearer {{token}}
+Content-Type: text/csv
+
+tracking_number;collected_amount;fee
+{{tracking1}};{{orderTotal}};1.42
+
+@settlementId = {{settlement.response.body.$.id}}
+
+### The same statement again → same settlement, "replayed": true, nothing counted twice
+POST {{api}}/couriers/{{courierId}}/settlements?reference=POSTA-2026-W48
+Authorization: Bearer {{token}}
+Content-Type: text/csv
+
+tracking_number;collected_amount;fee
+{{tracking1}};{{orderTotal}};1.42
+
+### The sample statement: shows the mismatch report (already settled, unknown tracking, ...)
+POST {{api}}/couriers/{{courierId}}/settlements?reference=sample-statement
+Authorization: Bearer {{token}}
+Content-Type: text/csv
+
+< ./samples/courier-remittance.csv
+
+### Settlement with lines, mismatches and "deliveredButUnpaid" (past the courier's remittance days)
+GET {{api}}/settlements/{{settlementId}}
+Authorization: Bearer {{token}}
+
+### All settlements of the courier
+GET {{api}}/settlements?courierId={{courierId}}
+Authorization: Bearer {{token}}
+
+### The order is now CashCollected
+GET {{baseUrl}}/api/admin/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 6. A REFUSED PARCEL (stock goes back only when the parcel is back)
+################################################################################
+
+### Shipment for the second confirmed order
+# @name shipment2
+POST {{api}}/shipments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "orderId": "{{order2Id}}", "courierId": "{{courierId}}", "trackingNumber": "{{tracking2}}" }
+
+@shipment2Id = {{shipment2.response.body.$.id}}
+
+### Handed over (manual, one parcel). Add "overrideMissingReceipt": true + "overrideReason" if its receipt is not issued.
+POST {{api}}/shipments/{{shipment2Id}}/handed-over
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "note": "Merr korrieri në 14:00" }
+
+### In transit
+POST {{api}}/shipments/{{shipment2Id}}/in-transit
+Authorization: Bearer {{token}}
+
+### The courier reports a refusal → shipment Refused; the order stays Shipped (parcel still with the courier)
+POST {{api}}/shipments/{{shipment2Id}}/refused
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "note": "Klienti refuzoi pakon" }
+
+### Parcel scanned back in the warehouse → order Refused, units back in the same batches
+POST {{api}}/shipments/{{shipment2Id}}/returned
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "note": "Pako e paprekur, kthyer në stok" }
+
+### Shipment with its timeline (actor + source: Manual, CsvImport, Settlement)
+GET {{api}}/shipments/{{shipment2Id}}
+Authorization: Bearer {{token}}
+
+### Delivered after a refusal → 409 Shipping.Shipment.InvalidTransition
+POST {{api}}/shipments/{{shipment2Id}}/delivered
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 7. LISTS AND REPORTS (Staff)
+################################################################################
+
+### Shipments (filters: status, courierId, tracking, orderNumber)
+GET {{api}}/shipments?courierId={{courierId}}&page=1&pageSize=50
+Authorization: Bearer {{token}}
+
+### Parcels with the courier for more than N days
+GET {{api}}/reports/in-transit?olderThanDays=3
+Authorization: Bearer {{token}}
+
+### Refusal rate per courier and the customers who refuse most
+GET {{api}}/reports/refusals?top=20
+Authorization: Bearer {{token}}
+
+### Money each courier still owes us (and what is overdue)
+GET {{api}}/reports/cod-held
+Authorization: Bearer {{token}}

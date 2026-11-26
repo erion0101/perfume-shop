@@ -1,0 +1,97 @@
+### PerfumeShop – Payments module: COD payments, fiscal receipts (NON-FISCAL in Development), daily cash
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Payments has no "write" endpoints for money: it follows Orders and Shipping events (outbox, every 30 s).
+# Run Orders.http (place + confirm) and Shipping.http (ship, deliver, settle / refuse + return) first,
+# wait ~30 s for the outbox jobs, then look at the results here.
+# In Development receipts come from the development provider: stored in the DB, number "NONFISCAL-…",
+# printed with "JO FISKAL – NON-FISCAL". Outside Development every receipt fails until a real provider exists.
+
+@baseUrl = http://localhost:5080
+@api = {{baseUrl}}/api/admin/payments
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+### Sign in (Admin or Staff)
+# @name signIn
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+@token = {{signIn.response.body.$.accessToken}}
+
+
+################################################################################
+### 1. PAYMENTS
+################################################################################
+
+### Latest payments (filters: status Expected|Collected|Failed|Cancelled, from, to (Kosovo days), courier, orderNumber)
+# @name payments
+GET {{api}}?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+@orderId = {{payments.response.body.$.items[0].orderId}}
+
+### Payment of one order with its receipts (sale + storno) and every attempt (request/response JSON)
+# @name payment
+GET {{api}}/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### Collected payments of one courier in a period (courier fee + net received from the statement)
+GET {{api}}?status=Collected&courier=Posta&from=2026-11-01&to=2026-11-30
+Authorization: Bearer {{token}}
+
+### Refused parcels (payment Failed)
+GET {{api}}?status=Failed
+Authorization: Bearer {{token}}
+
+### Invalid status → 400
+GET {{api}}?status=Paid
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 2. DAILY CASH SUMMARY PER COURIER
+################################################################################
+
+### Today (Kosovo time): shipped/expected, collected, fees, net, still at the courier, failed receipts
+GET {{api}}/daily-summary
+Authorization: Bearer {{token}}
+
+### A given day
+GET {{api}}/daily-summary?date=2026-11-26
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 3. RECEIPTS
+################################################################################
+
+### Receipts (filters: status Pending|Issued|Failed|Voided, kind Sale|Storno, orderNumber)
+# @name receipts
+GET {{api}}/receipts?kind=Sale&pageSize=20
+Authorization: Bearer {{token}}
+
+@receiptId = {{receipts.response.body.$.items[0].id}}
+
+### One receipt: lines with batch codes, 18% VAT breakdown, total, attempts
+GET {{api}}/receipts/{{receiptId}}
+Authorization: Bearer {{token}}
+
+### Printable receipt (HTML) – shows "JO FISKAL – NON-FISCAL – VETËM PËR TESTIM" in Development
+GET {{api}}/receipts/{{receiptId}}/print
+Authorization: Bearer {{token}}
+
+### Storno receipts (refused parcels back in the warehouse), linked to their sale
+GET {{api}}/receipts?kind=Storno
+Authorization: Bearer {{token}}
+
+### Receipts that could not be issued
+# @name failed
+GET {{api}}/receipts?status=Failed
+Authorization: Bearer {{token}}
+
+### Retry a failed receipt (same internal number, a new attempt is stored). Issued receipts → 409.
+POST {{api}}/receipts/{{failed.response.body.$.items[0].id}}/retry
+Authorization: Bearer {{token}}

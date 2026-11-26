@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\src\Shared\PerfumeShop.Shared.Infrastructure\PerfumeShop.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\PerfumeShop.Modules.Catalog\PerfumeShop.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\PerfumeShop.Modules.Catalog.Contracts\PerfumeShop.Modules.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Inventory\PerfumeShop.Modules.Inventory\PerfumeShop.Modules.Inventory.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Inventory\PerfumeShop.Modules.Inventory.Contracts\PerfumeShop.Modules.Inventory.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Orders\PerfumeShop.Modules.Orders\PerfumeShop.Modules.Orders.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Orders\PerfumeShop.Modules.Orders.Contracts\PerfumeShop.Modules.Orders.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\PerfumeShop.Modules.Payments\PerfumeShop.Modules.Payments.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Payments\PerfumeShop.Modules.Payments.Contracts\PerfumeShop.Modules.Payments.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Shipping\PerfumeShop.Modules.Shipping\PerfumeShop.Modules.Shipping.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Shipping\PerfumeShop.Modules.Shipping.Contracts\PerfumeShop.Modules.Shipping.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\PerfumeShop.Modules.Customers\PerfumeShop.Modules.Customers.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Customers\PerfumeShop.Modules.Customers.Contracts\PerfumeShop.Modules.Customers.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\PerfumeShop.Modules.Notifications\PerfumeShop.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notifications\PerfumeShop.Modules.Notifications.Contracts\PerfumeShop.Modules.Notifications.Contracts.csproj" />
+  </ItemGroup>
+</Project>

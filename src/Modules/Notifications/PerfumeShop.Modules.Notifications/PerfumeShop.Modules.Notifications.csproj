@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Internal implementation of the Notifications module (customer SMS, staff alert emails, notification log).
+    Allowed references: Shared.* and other modules' .Contracts projects ONLY.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Infrastructure\PerfumeShop.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\PerfumeShop.Modules.Notifications.Contracts\PerfumeShop.Modules.Notifications.Contracts.csproj" />
+    <ProjectReference Include="..\..\Orders\PerfumeShop.Modules.Orders.Contracts\PerfumeShop.Modules.Orders.Contracts.csproj" />
+    <ProjectReference Include="..\..\Shipping\PerfumeShop.Modules.Shipping.Contracts\PerfumeShop.Modules.Shipping.Contracts.csproj" />
+    <ProjectReference Include="..\..\Payments\PerfumeShop.Modules.Payments.Contracts\PerfumeShop.Modules.Payments.Contracts.csproj" />
+    <ProjectReference Include="..\..\Inventory\PerfumeShop.Modules.Inventory.Contracts\PerfumeShop.Modules.Inventory.Contracts.csproj" />
+    <ProjectReference Include="..\..\Catalog\PerfumeShop.Modules.Catalog.Contracts\PerfumeShop.Modules.Catalog.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PerfumeShop.Modules.Notifications.Tests" />
+  </ItemGroup>
+</Project>

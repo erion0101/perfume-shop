@@ -1,0 +1,254 @@
+### PerfumeShop – Orders module: the whole Cash on Delivery flow
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Covers: sign-in, stock, quote, placing, confirming and cancelling. Shipping steps: Shipping.http.
+# Works with the VS Code "REST Client" extension and Visual Studio's .http editor. Run top to bottom.
+# Needs: a PUBLISHED fragrance with an ACTIVE, priced variant (Catalog.http) and stock (done below).
+# In Development the SMS code is printed in the API console: "DEV SMS to +383…: … 123456 …".
+
+@baseUrl = http://localhost:5080
+@phone = +383 44 123 456
+@otpCode = 123456
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+
+################################################################################
+### 1. SIGN IN: staff (email + password) and customer (phone + SMS code)
+################################################################################
+
+### Staff / admin sign-in
+# @name staffLogin
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}" }
+
+@staff = {{staffLogin.response.body.$.accessToken}}
+
+### Customer: request a code (then copy it from the API console into @otpCode)
+POST {{baseUrl}}/api/auth/otp/request
+Content-Type: application/json
+
+{ "phone": "{{phone}}" }
+
+### Customer: verify the code
+# @name customerLogin
+POST {{baseUrl}}/api/auth/otp/verify
+Content-Type: application/json
+
+{ "phone": "{{phone}}", "code": "{{otpCode}}" }
+
+@customer = {{customerLogin.response.body.$.accessToken}}
+
+### Customer: delivery address (Kosovo; delivery to AL/MK is disabled by default)
+# @name address
+POST {{baseUrl}}/api/customers/me/addresses
+Authorization: Bearer {{customer}}
+Content-Type: application/json
+
+{ "countryCode": "XK", "city": "Lipjan", "street": "Rr. Adem Jashari 12", "notes": "Kati 2, afër shkollës" }
+
+@addressId = {{address.response.body.$.id}}
+
+
+################################################################################
+### 2. A PRODUCT WITH STOCK
+################################################################################
+
+### First published fragrance in the catalog
+# @name fragrances
+GET {{baseUrl}}/api/admin/catalog/fragrances?status=Published&pageSize=1
+Authorization: Bearer {{staff}}
+
+### …its variants
+# @name fragrance
+GET {{baseUrl}}/api/admin/catalog/fragrances/{{fragrances.response.body.$.items[0].id}}
+Authorization: Bearer {{staff}}
+
+@variantId = {{fragrance.response.body.$.variants[0].id}}
+
+### Receive stock for it (goods receipt with batch code + supplier invoice)
+POST {{baseUrl}}/api/admin/inventory/receipts
+Authorization: Bearer {{staff}}
+Content-Type: application/json
+
+{
+  "supplierName": "Lattafa Distribution FZE",
+  "supplierInvoiceNumber": "INV-2026-0200",
+  "supplierInvoiceDate": "2026-11-20",
+  "receivedOn": "2026-11-21",
+  "lines": [ { "variantId": "{{variantId}}", "batchCode": "B2401", "quantity": 10, "unitCost": 18.50 } ]
+}
+
+
+################################################################################
+### 3. CART QUOTE (public; the storefront never calculates prices itself)
+################################################################################
+
+### Quote: current prices, availability, delivery fee (free from 40 € in Kosovo), VAT, total
+POST {{baseUrl}}/api/cart/quote
+Content-Type: application/json
+
+{ "items": [ { "variantId": "{{variantId}}", "quantity": 1 } ], "countryCode": "XK" }
+
+### Quote for Albania → "deliveryAvailable": false, "canCheckout": false
+POST {{baseUrl}}/api/cart/quote
+Content-Type: application/json
+
+{ "items": [ { "variantId": "{{variantId}}", "quantity": 1 } ], "countryCode": "AL" }
+
+
+################################################################################
+### 4. PLACE THE ORDER (customer). Same Idempotency-Key = same order, never two.
+################################################################################
+
+### Place order (prices come from the catalog; the stock is reserved)
+# @name order
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customer}}
+Idempotency-Key: checkout-0001-a7f3c2
+Content-Type: application/json
+
+{
+  "items": [ { "variantId": "{{variantId}}", "quantity": 1 } ],
+  "addressId": "{{addressId}}",
+  "fullName": "Arbër Krasniqi",
+  "customerNote": "Ju lutem thirrni para se të vini"
+}
+
+@orderId = {{order.response.body.$.id}}
+
+### Double click: same key → 200 with the SAME order and header Idempotent-Replayed: true
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customer}}
+Idempotency-Key: checkout-0001-a7f3c2
+Content-Type: application/json
+
+{
+  "items": [ { "variantId": "{{variantId}}", "quantity": 1 } ],
+  "addressId": "{{addressId}}",
+  "fullName": "Arbër Krasniqi",
+  "customerNote": "Ju lutem thirrni para se të vini"
+}
+
+### My orders
+GET {{baseUrl}}/api/orders
+Authorization: Bearer {{customer}}
+
+### My order (with timeline)
+GET {{baseUrl}}/api/orders/{{orderId}}
+Authorization: Bearer {{customer}}
+
+
+################################################################################
+### 5. STAFF: confirm → ship → delivered → cash collected
+################################################################################
+
+### Orders waiting for a confirmation call (filters: status, from, to, phone, number)
+GET {{baseUrl}}/api/admin/orders?status=Pending&page=1&pageSize=50
+Authorization: Bearer {{staff}}
+
+### Search by the last digits of the phone
+GET {{baseUrl}}/api/admin/orders?phone=123456
+Authorization: Bearer {{staff}}
+
+### Order with timeline and internal notes
+GET {{baseUrl}}/api/admin/orders/{{orderId}}
+Authorization: Bearer {{staff}}
+
+### Internal note (never shown to the customer)
+POST {{baseUrl}}/api/admin/orders/{{orderId}}/notes
+Authorization: Bearer {{staff}}
+Content-Type: application/json
+
+{ "text": "Klienti konfirmoi në telefon, dorëzim pas orës 17" }
+
+### Confirm (after calling the customer). Pending orders not confirmed within 48 h expire.
+POST {{baseUrl}}/api/admin/orders/{{orderId}}/confirm
+Authorization: Bearer {{staff}}
+
+### Invalid step → 409 Orders.Order.InvalidTransition (already confirmed)
+POST {{baseUrl}}/api/admin/orders/{{orderId}}/confirm
+Authorization: Bearer {{staff}}
+
+
+################################################################################
+### 6. SHIPPING, DELIVERY, REFUSAL, CASH → Shipping.http
+################################################################################
+#
+# Orders no longer has ship / delivered / refused / cash-collected endpoints. Shipping owns courier and
+# tracking and moves the order through IOrdersApi:
+#   create shipment → order Shipped (stock committed, batch codes on the lines)
+#   courier delivered → order Delivered
+#   parcel back in the warehouse after a refusal → order Refused (stock back into its batches)
+#   courier statement (or manual booking) → order CashCollected
+# Continue with Shipping.http using {{orderId}}, then look at the order again here:
+
+### Order with its full timeline after Shipping.http
+GET {{baseUrl}}/api/admin/orders/{{orderId}}
+Authorization: Bearer {{staff}}
+
+
+################################################################################
+### 7. CANCELLING
+################################################################################
+
+### Third order
+# @name order3
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{customer}}
+Idempotency-Key: checkout-0003-c3e990
+Content-Type: application/json
+
+{ "items": [ { "variantId": "{{variantId}}", "quantity": 1 } ], "addressId": "{{addressId}}" }
+
+@order3Id = {{order3.response.body.$.id}}
+
+### Customer cancels while Pending (stock released). After confirmation only staff can cancel.
+POST {{baseUrl}}/api/orders/{{order3Id}}/cancel
+Authorization: Bearer {{customer}}
+Content-Type: application/json
+
+{ "reason": "Ndryshova mendje" }
+
+### Staff cancel needs a reason (allowed until the parcel ships)
+POST {{baseUrl}}/api/admin/orders/{{order3Id}}/cancel
+Authorization: Bearer {{staff}}
+Content-Type: application/json
+
+{ "reason": "Klienti nuk përgjigjet në telefon" }
+
+
+################################################################################
+### 8. ADMIN SETTINGS (Admin only)
+################################################################################
+
+### Anti-fake-order rules and confirmation window
+GET {{baseUrl}}/api/admin/orders/settings
+Authorization: Bearer {{staff}}
+
+### Change them (max open COD orders per customer, refused parcels allowed, hours to confirm)
+PUT {{baseUrl}}/api/admin/orders/settings
+Authorization: Bearer {{staff}}
+Content-Type: application/json
+
+{ "maxOpenOrdersPerCustomer": 2, "maxRefusedOrders": 2, "pendingExpiryHours": 48 }
+
+### Delivery rates per country
+GET {{baseUrl}}/api/admin/orders/delivery-rates
+Authorization: Bearer {{staff}}
+
+### Enable North Macedonia
+PUT {{baseUrl}}/api/admin/orders/delivery-rates/MK
+Authorization: Bearer {{staff}}
+Content-Type: application/json
+
+{ "isEnabled": true, "fee": 5.00, "freeDeliveryFrom": 80.00 }
+
+### …and disable it again
+PUT {{baseUrl}}/api/admin/orders/delivery-rates/MK
+Authorization: Bearer {{staff}}
+Content-Type: application/json
+
+{ "isEnabled": false, "fee": 5.00, "freeDeliveryFrom": 80.00 }

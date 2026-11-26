@@ -1,0 +1,300 @@
+### PerfumeShop – Catalog module
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Works with the VS Code "REST Client" extension and Visual Studio's .http editor.
+# Run the requests top to bottom: later requests reuse ids from earlier responses
+# (named requests: "# @name ...", then {{name.response.body.$.field}}).
+#
+# Admin endpoints need a JWT of an Admin account. Sign in first with the seeded admin
+# (set once with user-secrets, see README → "Admin account"):
+#   dotnet user-secrets set "Auth:SeedAdmin:Email" "you@example.com" --project src/Bootstrapper/PerfumeShop.Api
+#   dotnet user-secrets set "Auth:SeedAdmin:Password" "<12+ chars, upper, lower, digit, symbol>" --project src/Bootstrapper/PerfumeShop.Api
+# Access tokens live 15 minutes: run "Sign in" again when you get 401.
+
+@baseUrl = http://localhost:5080
+@admin = {{baseUrl}}/api/admin/catalog
+@shop = {{baseUrl}}/api/catalog
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+### Health
+GET {{baseUrl}}/health
+
+### Sign in as admin (Auth:SeedAdmin)
+# @name signIn
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+@token = {{signIn.response.body.$.accessToken}}
+
+
+################################################################################
+### FRAGELLA (uses the monthly budget; repeated searches come from the 30-day cache)
+################################################################################
+
+### Budget used this month
+GET {{admin}}/fragella/usage
+Authorization: Bearer {{token}}
+
+### Search Fragella (min 3 characters). Copy a "fragellaId" from the result or use the chaining below.
+# @name search
+GET {{admin}}/fragella/search?q=khamrah
+Authorization: Bearer {{token}}
+
+### Import the first search result as a DRAFT fragrance (no API call, no variants).
+# Optional: "concentration" (EauDeParfum, EauDeToilette, ExtraitDeParfum, Parfum, EauDeCologne, Attar),
+#           "gender" (Male, Female, Unisex), "brandId" (attach to an existing brand).
+# @name import
+POST {{admin}}/fragrances/import
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fragellaId": "{{search.response.body.$.items[0].fragellaId}}"
+}
+
+### Import again → 409 Catalog.Fragella.AlreadyImported
+POST {{admin}}/fragrances/import
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fragellaId": "{{search.response.body.$.items[0].fragellaId}}"
+}
+
+@fragranceId = {{import.response.body.$.id}}
+@fragranceSlug = {{import.response.body.$.slug}}
+
+
+################################################################################
+### FRAGRANCES (admin)
+################################################################################
+
+### List fragrances (admin sees drafts). Filters: search, brandId, status=Draft|Published, page, pageSize
+GET {{admin}}/fragrances?status=Draft&page=1&pageSize=25
+Authorization: Bearer {{token}}
+
+### Get one fragrance with all variants
+GET {{admin}}/fragrances/{{fragranceId}}
+Authorization: Bearer {{token}}
+
+### Update details: Albanian description + manual corrections (full replacement; slug omitted = kept)
+PUT {{admin}}/fragrances/{{fragranceId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Khamrah",
+  "concentration": "EauDeParfum",
+  "gender": "Unisex",
+  "olfactiveFamily": "Amber",
+  "launchYear": 2022,
+  "perfumers": [],
+  "description": "Parfum oriental i ëmbël me hurma, kanellë dhe vanilje. Ideal për mbrëmje vjeshte dhe dimri.",
+  "longevity": "LongLasting",
+  "sillage": "Strong",
+  "seasons": ["Autumn", "Winter"],
+  "occasions": ["Night", "Evening"],
+  "notes": {
+    "top": [{ "name": "Cinnamon" }, { "name": "Nutmeg" }, { "name": "Bergamot" }],
+    "heart": [{ "name": "Dates" }, { "name": "Praline" }, { "name": "Tuberose" }],
+    "base": [{ "name": "Vanilla" }, { "name": "Tonka Bean" }, { "name": "Benzoin" }, { "name": "Myrrh" }]
+  },
+  "accords": [
+    { "name": "sweet", "percentage": 100 },
+    { "name": "warm spicy", "percentage": 90 },
+    { "name": "amber", "percentage": 75 }
+  ],
+  "similarTo": [
+    { "brandName": "Kilian", "name": "Angels' Share" }
+  ]
+}
+
+### Publish without an active variant → 409 Catalog.Fragrance.PublishRequiresActiveVariant
+POST {{admin}}/fragrances/{{fragranceId}}/publish
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### VARIANTS (admin) — new variants start inactive
+################################################################################
+
+### Create a 100 ml full bottle without a price
+# Types: FullBottle, Tester, Mini, GiftSet, SampleSet. Size units: Ml, Gram, Piece.
+# @name variant
+POST {{admin}}/fragrances/{{fragranceId}}/variants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "LAT-KHAMRAH-100",
+  "type": "FullBottle",
+  "size": { "value": 100, "unit": "Ml" },
+  "ean": "4006381333931",
+  "images": [
+    { "url": "https://cdn.example.com/lattafa/khamrah-100.webp", "altText": "Lattafa Khamrah EDP 100 ml", "sortOrder": 0 }
+  ]
+}
+
+@variantId = {{variant.response.body.$.id}}
+
+### Activate without a price → 400 Catalog.Variant.ActivationRequiresPrice
+POST {{admin}}/fragrances/{{fragranceId}}/variants/{{variantId}}/activate
+Authorization: Bearer {{token}}
+
+### Update variant: set price (EUR, VAT incl.) and compare-at price
+# price null = keep current price; images null = keep, [] = remove all
+PUT {{admin}}/fragrances/{{fragranceId}}/variants/{{variantId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "LAT-KHAMRAH-100",
+  "ean": "4006381333931",
+  "price": 39.90,
+  "compareAtPrice": 49.90
+}
+
+### Activate (now it has a price)
+POST {{admin}}/fragrances/{{fragranceId}}/variants/{{variantId}}/activate
+Authorization: Bearer {{token}}
+
+### Bakhoor-style variant sold by weight (40 g), with a price
+POST {{admin}}/fragrances/{{fragranceId}}/variants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "LAT-BAKHOOR-40G",
+  "type": "FullBottle",
+  "size": { "value": 40, "unit": "Gram" },
+  "price": 12.50
+}
+
+### Sample set: sets need no size
+POST {{admin}}/fragrances/{{fragranceId}}/variants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "LAT-KHAMRAH-SAMPLE-SET",
+  "type": "SampleSet",
+  "price": 9.90
+}
+
+### Validation error example → 400 ValidationProblem (compare-at must be above price)
+POST {{admin}}/fragrances/{{fragranceId}}/variants
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "LAT-KHAMRAH-30",
+  "type": "FullBottle",
+  "size": { "value": 30, "unit": "Ml" },
+  "price": 25.00,
+  "compareAtPrice": 20.00
+}
+
+### Publish (has an active variant now)
+POST {{admin}}/fragrances/{{fragranceId}}/publish
+Authorization: Bearer {{token}}
+
+### Deactivate the last active variant of a published fragrance → 409 Catalog.Fragrance.LastActiveVariant
+POST {{admin}}/fragrances/{{fragranceId}}/variants/{{variantId}}/deactivate
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### STOREFRONT (public, no auth) — only published fragrances with active variants
+################################################################################
+
+### Product page by slug
+GET {{shop}}/fragrances/{{fragranceSlug}}
+
+### Listing with filters: brand (slug), gender (Male|Female|Unisex), family (Amber, Woody, …),
+### minPrice / maxPrice (EUR), sort (newest|price_asc|price_desc|name), page, pageSize (max 48)
+GET {{shop}}/fragrances?gender=Unisex&family=Amber&minPrice=20&maxPrice=60&sort=price_asc&page=1&pageSize=24
+
+### Invalid filters → 400 ValidationProblem
+GET {{shop}}/fragrances?gender=robot&pageSize=500
+
+
+################################################################################
+### UNPUBLISH (hides it from the storefront again)
+################################################################################
+
+### Unpublish
+POST {{admin}}/fragrances/{{fragranceId}}/unpublish
+Authorization: Bearer {{token}}
+
+### Product page now → 404
+GET {{shop}}/fragrances/{{fragranceSlug}}
+
+### Now the variant can be deactivated
+POST {{admin}}/fragrances/{{fragranceId}}/variants/{{variantId}}/deactivate
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### BRANDS (admin)
+################################################################################
+
+### List brands (optional ?search=)
+GET {{admin}}/brands
+Authorization: Bearer {{token}}
+
+### Create a brand (slug generated from the name: "Parfumeri Çelës" → "parfumeri-celes")
+# @name brand
+POST {{admin}}/brands
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Maison Alhambra",
+  "countryCode": "AE",
+  "logoUrl": "https://cdn.example.com/brands/maison-alhambra.webp",
+  "description": "Shtëpi parfumesh nga Dubai, e njohur për interpretime të parfumeve klasike me çmim të arsyeshëm."
+}
+
+@brandId = {{brand.response.body.$.id}}
+
+### Get a brand
+GET {{admin}}/brands/{{brandId}}
+Authorization: Bearer {{token}}
+
+### Update a brand (slug omitted = kept, so URLs do not break)
+PUT {{admin}}/brands/{{brandId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Maison Alhambra",
+  "countryCode": "AE",
+  "description": "Shtëpi parfumesh nga Emiratet e Bashkuara Arabe."
+}
+
+### Duplicate name → 409 Catalog.Brand.NameTaken
+POST {{admin}}/brands
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "maison alhambra"
+}
+
+### Delete a brand (409 Catalog.Brand.HasFragrances while it still has fragrances)
+DELETE {{admin}}/brands/{{brandId}}
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### AUTH CHECKS
+################################################################################
+
+### No token → 401
+GET {{admin}}/brands

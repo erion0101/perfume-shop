@@ -1,0 +1,21 @@
+{
+  "name": "@perfumeshop/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig/*": "./tsconfig/*",
+    "./eslint/base": "./eslint/base.js",
+    "./eslint/react": "./eslint/react.js",
+    "./tailwind/theme.css": "./tailwind/theme.css"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "typescript-eslint": "^8.74.0"
+  },
+  "peerDependencies": {
+    "eslint": "^10.0.0"
+  }
+}

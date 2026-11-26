@@ -1,0 +1,23 @@
+{
+  "name": "perfumeshop-web",
+  "private": true,
+  "packageManager": "pnpm@12.23.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "e2e": "pnpm --filter @perfumeshop/admin e2e",
+    "storybook": "pnpm --filter @perfumeshop/ui storybook",
+    "build-storybook": "turbo run build-storybook",
+    "generate-api": "pnpm --filter @perfumeshop/api-client generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.13",
+    "typescript": "~6.0.3"
+  }
+}

@@ -1,0 +1,42 @@
+# ---------- .NET ----------
+bin/
+obj/
+*.user
+*.suo
+*.rsuser
+.vs/
+TestResults/
+*.trx
+*.coverage
+coverage*.xml
+appsettings.*.local.json
+
+# ---------- Node / web ----------
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+out/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+
+# ---------- Env & secrets ----------
+.env
+.env.*
+!.env.example
+
+# ---------- IDE / OS ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+.DS_Store
+Thumbs.db
+src/Bootstrapper/PerfumeShop.Api/App_Data/
+storybook-static/
+test-results/
+playwright-report/
+.playwright/

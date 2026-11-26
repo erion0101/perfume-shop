@@ -1,0 +1,230 @@
+### PerfumeShop – Customers module (auth, my account, admin)
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Works with the VS Code "REST Client" extension and Visual Studio's .http editor.
+# Run the requests top to bottom: later requests reuse tokens/ids from earlier responses.
+#
+# In Development the SMS is NOT sent: the code is written to the API console as
+#   "DEV SMS to +38344123456: PerfumeShop: kodi juaj i hyrjes është 123456 ..."
+# Copy the 6 digits into @otpCode below before running "Verify code".
+
+@baseUrl = http://localhost:5080
+@phone = +383 44 123 456
+@otpCode = 123456
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+
+################################################################################
+### CUSTOMER LOGIN (phone + SMS code, no password)
+################################################################################
+
+### Request a code (202). Accepted formats: "+383 44 123 456", "044 123 456", "00383…",
+### "+355 69 123 4567" (Albania), "+389 70 123 456" (North Macedonia). Mobiles only.
+### Limits: 3 codes per phone and 10 per IP per 15 minutes; a new code replaces the previous one.
+POST {{baseUrl}}/api/auth/otp/request
+Content-Type: application/json
+
+{
+  "phone": "{{phone}}"
+}
+
+### Verify the code → tokens. First login creates the customer ("isNewCustomer": true).
+### Wrong code → 400 with attempts left; after 5 wrong codes → 429, request a new code.
+# @name customerLogin
+POST {{baseUrl}}/api/auth/otp/verify
+Content-Type: application/json
+
+{
+  "phone": "{{phone}}",
+  "code": "{{otpCode}}"
+}
+
+@customerToken = {{customerLogin.response.body.$.accessToken}}
+@customerRefresh = {{customerLogin.response.body.$.refreshToken}}
+@customerId = {{customerLogin.response.body.$.customerId}}
+
+### Landline / unsupported country → 400
+POST {{baseUrl}}/api/auth/otp/request
+Content-Type: application/json
+
+{
+  "phone": "+383 38 123 456"
+}
+
+
+################################################################################
+### TOKENS
+################################################################################
+
+### Refresh: returns a NEW access + refresh token; the old refresh token stops working.
+# @name refreshed
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{customerRefresh}}"
+}
+
+@customerToken2 = {{refreshed.response.body.$.accessToken}}
+@customerRefresh2 = {{refreshed.response.body.$.refreshToken}}
+
+### Re-using the OLD refresh token → 401, and the whole session is revoked (theft detection).
+### After this, "customerRefresh2" is dead too: sign in again with a new code.
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{customerRefresh}}"
+}
+
+
+################################################################################
+### MY ACCOUNT (customer token). The access token keeps working for up to 15 minutes even
+### after the replay above (only refreshing is dead); after that, sign in again with a new code.
+################################################################################
+
+### My profile
+GET {{baseUrl}}/api/customers/me
+Authorization: Bearer {{customerToken2}}
+
+### Update my profile (phone cannot be changed: it is the login)
+PUT {{baseUrl}}/api/customers/me
+Authorization: Bearer {{customerToken2}}
+Content-Type: application/json
+
+{
+  "fullName": "Arbër Krasniqi",
+  "email": "arber@example.com"
+}
+
+### My addresses (default first)
+GET {{baseUrl}}/api/customers/me/addresses
+Authorization: Bearer {{customerToken2}}
+
+### Add an address (the first one is always the default)
+# @name home
+POST {{baseUrl}}/api/customers/me/addresses
+Authorization: Bearer {{customerToken2}}
+Content-Type: application/json
+
+{
+  "city": "Lipjan",
+  "street": "Rr. Adem Jashari 12",
+  "notes": "Kati 2, afër shkollës"
+}
+
+@homeId = {{home.response.body.$.id}}
+
+### Add a second address and make it the default
+# @name work
+POST {{baseUrl}}/api/customers/me/addresses
+Authorization: Bearer {{customerToken2}}
+Content-Type: application/json
+
+{
+  "city": "Prishtinë",
+  "street": "Rr. Nënë Tereza 5",
+  "isDefault": true
+}
+
+@workId = {{work.response.body.$.id}}
+
+### Make "home" the default again (exactly one default at any time)
+POST {{baseUrl}}/api/customers/me/addresses/{{homeId}}/default
+Authorization: Bearer {{customerToken2}}
+
+### Edit an address
+PUT {{baseUrl}}/api/customers/me/addresses/{{workId}}
+Authorization: Bearer {{customerToken2}}
+Content-Type: application/json
+
+{
+  "city": "Prishtinë",
+  "street": "Rr. Nënë Tereza 7",
+  "notes": "Hyrja nga parkingu"
+}
+
+### Delete an address (deleting the default promotes the oldest remaining one)
+DELETE {{baseUrl}}/api/customers/me/addresses/{{workId}}
+Authorization: Bearer {{customerToken2}}
+
+### Logout: revokes this session's refresh token (always 204)
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{customerRefresh2}}"
+}
+
+
+################################################################################
+### STAFF / ADMIN LOGIN (email + password; account seeded from Auth:SeedAdmin)
+################################################################################
+
+### Sign in as admin. 5 wrong passwords lock the account for 15 minutes.
+# @name adminLogin
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+@adminToken = {{adminLogin.response.body.$.accessToken}}
+
+### Wrong password → 401 Customers.Auth.InvalidCredentials
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "definitely-wrong"
+}
+
+
+################################################################################
+### CUSTOMERS (admin or staff token)
+################################################################################
+
+### List customers. search = phone in any format (exact) or part of name/email; status = Active|Blocked
+GET {{baseUrl}}/api/admin/customers?search=044123456&page=1&pageSize=25
+Authorization: Bearer {{adminToken}}
+
+### Customer details with addresses
+GET {{baseUrl}}/api/admin/customers/{{customerId}}
+Authorization: Bearer {{adminToken}}
+
+### Block (signs the customer out everywhere; no new codes or logins)
+POST {{baseUrl}}/api/admin/customers/{{customerId}}/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Refuzoi 3 porosi me pagesë në dorëzim"
+}
+
+### Blocked customer asks for a code → 403 Customers.Customer.Blocked
+POST {{baseUrl}}/api/auth/otp/request
+Content-Type: application/json
+
+{
+  "phone": "{{phone}}"
+}
+
+### Unblock
+POST {{baseUrl}}/api/admin/customers/{{customerId}}/unblock
+Authorization: Bearer {{adminToken}}
+
+
+################################################################################
+### AUTH CHECKS
+################################################################################
+
+### No token → 401
+GET {{baseUrl}}/api/customers/me
+
+### Customer token on an admin endpoint → 403
+GET {{baseUrl}}/api/admin/customers
+Authorization: Bearer {{customerToken2}}
