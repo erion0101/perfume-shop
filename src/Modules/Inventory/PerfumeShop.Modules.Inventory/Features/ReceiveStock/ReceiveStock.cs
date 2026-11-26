@@ -9,6 +9,7 @@ using PerfumeShop.Modules.Catalog.Contracts;
 using PerfumeShop.Modules.Inventory.Domain;
 using PerfumeShop.Modules.Inventory.Features.Shared;
 using PerfumeShop.Modules.Inventory.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -111,6 +112,7 @@ internal static class ReceiveStockEndpoint
         admin.MapPost("/receipts", async (ReceiveStockRequest request, ClaimsPrincipal user, ReceiveStockHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(request, user.Actor(), ct)).ToCreated(r => $"/api/admin/inventory/receipts/{r.ReceiptId}"))
             .WithValidation<ReceiveStockRequest>()
+            .Audited("Inventory.Stock.Received", "GoodsReceipt", "Mall i pranuar")
             .WithName("ReceiveStock")
             .Produces<ReceiveStockResponse>(StatusCodes.Status201Created);
 }

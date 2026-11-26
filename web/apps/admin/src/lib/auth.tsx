@@ -8,7 +8,8 @@ interface AuthContextValue {
   /** False until the first silent refresh (page reload) has finished. */
   ready: boolean;
   isAdmin: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  /** Throws ApiError: e.g. Customers.Auth.TwoFactorRequired or PasswordChangeRequired (the login page then asks for more). */
+  signIn: (email: string, password: string, second?: { twoFactorCode?: string; recoveryCode?: string }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -40,8 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     ready,
     isAdmin: isAdmin(session),
-    async signIn(email, password) {
-      const response = await unwrap(api.POST("/api/auth/staff/session", { body: { email, password } }));
+    async signIn(email, password, second) {
+      const response = await unwrap(
+        api.POST("/api/auth/staff/session", { body: { email, password, twoFactorCode: second?.twoFactorCode || null, recoveryCode: second?.recoveryCode || null } }),
+      );
       queryClient.clear();
       sessionStore.set(toSession(response));
     },

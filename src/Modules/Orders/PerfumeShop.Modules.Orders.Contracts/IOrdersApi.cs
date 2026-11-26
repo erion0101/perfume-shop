@@ -13,6 +13,12 @@ public interface IOrdersApi
     /// <summary>Order numbers for ids (e.g. Inventory's batch trace); unknown ids are left out.</summary>
     Task<IReadOnlyDictionary<Guid, string>> GetOrderNumbersAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken cancellationToken = default);
 
+    /// <summary>Order and refused-parcel counts per customer (customers without orders are left out).</summary>
+    Task<IReadOnlyDictionary<Guid, CustomerOrderStatsDto>> GetCustomerOrderStatsAsync(IReadOnlyCollection<Guid> customerIds, CancellationToken cancellationToken = default);
+
+    /// <summary>Customers with at least one refused parcel (admin "has refusals" filter).</summary>
+    Task<IReadOnlyList<Guid>> GetCustomerIdsWithRefusalsAsync(CancellationToken cancellationToken = default);
+
     // Status changes driven by Shipping. All are idempotent: repeating a call for an order that is
     // already in that state succeeds without changing anything. Actors are staff user ids.
 
@@ -68,3 +74,5 @@ public sealed record OrderLineSummaryDto(
     decimal LineTotal,
     decimal VatAmount,
     IReadOnlyList<string> Batches);
+
+public sealed record CustomerOrderStatsDto(int Orders, int Refused);

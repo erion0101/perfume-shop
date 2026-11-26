@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using PerfumeShop.Modules.Catalog.Domain.Fragrances;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -46,11 +47,13 @@ internal static class ChangeVariantStatusEndpoint
         admin.MapPost("/fragrances/{id:guid}/variants/{variantId:guid}/activate",
                 async (Guid id, Guid variantId, ChangeVariantStatusHandler handler, CancellationToken ct) =>
                     (await handler.ActivateAsync(id, variantId, ct)).ToOk())
+            .Audited("Catalog.Variant.Activated", "Variant", "Varianti u aktivizua")
             .WithName("ActivateVariant");
 
         admin.MapPost("/fragrances/{id:guid}/variants/{variantId:guid}/deactivate",
                 async (Guid id, Guid variantId, ChangeVariantStatusHandler handler, CancellationToken ct) =>
                     (await handler.DeactivateAsync(id, variantId, ct)).ToOk())
+            .Audited("Catalog.Variant.Deactivated", "Variant", "Varianti u çaktivizua")
             .WithName("DeactivateVariant");
     }
 }

@@ -37,7 +37,7 @@ describe("LoginPage", () => {
     const calls = mockApi({
       "POST /api/auth/staff/session/refresh": () => json({}, 401),
       "POST /api/auth/staff/session": () =>
-        json({ accessToken: "abc", accessTokenExpiresAtUtc: new Date(Date.now() + 900_000).toISOString(), userId: "u1", email: "admin@perfumeshop.test", roles: ["Admin"] }),
+        json({ accessToken: "abc", accessTokenExpiresAtUtc: new Date(Date.now() + 900_000).toISOString(), userId: "u1", email: "admin@perfumeshop.test", displayName: null, roles: ["Admin"], twoFactorEnabled: false, twoFactorSetupRequired: false }),
     });
     const { router } = renderPage(<LoginPage />, { path: "/login", route: "/login", session: null });
 
@@ -47,7 +47,7 @@ describe("LoginPage", () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/"));
     expect(sessionStore.get()?.accessToken).toBe("abc");
-    expect(calls.find((c) => c.path === "/api/auth/staff/session")!.body).toEqual({ email: "admin@perfumeshop.test", password: "secret" });
+    expect(calls.find((c) => c.path === "/api/auth/staff/session")!.body).toEqual({ email: "admin@perfumeshop.test", password: "secret", twoFactorCode: null, recoveryCode: null });
     expect(window.localStorage.length + window.sessionStorage.length).toBe(0); // nothing persisted in JS storage
   });
 });

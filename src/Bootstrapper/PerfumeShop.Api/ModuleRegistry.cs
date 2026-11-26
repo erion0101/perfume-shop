@@ -1,3 +1,4 @@
+using PerfumeShop.Modules.Administration;
 using PerfumeShop.Modules.Catalog;
 using PerfumeShop.Modules.Customers;
 using PerfumeShop.Modules.Inventory;
@@ -21,5 +22,6 @@ internal static class ModuleRegistry
         new ShippingModule(),
         new CustomersModule(),
         new NotificationsModule(),
+        new AdministrationModule(),
     ];
 }

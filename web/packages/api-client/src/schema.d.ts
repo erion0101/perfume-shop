@@ -456,6 +456,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/orders/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Today (Kosovo time), pending now, last 14 days, top sellers and refusal rate (30 days). */
+        get: operations["OrdersDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/orders/customers/{customerId}/history": {
         parameters: {
             query?: never;
@@ -609,6 +626,23 @@ export interface paths {
             cookie?: never;
         };
         get: operations["ListPayments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/payments/totals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Collected today and this week (Kosovo time), cash still at couriers, failed receipts. */
+        get: operations["PaymentTotals"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1104,6 +1138,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/staff/password/initial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Temporary password → own password (first sign-in or after an Admin reset). Then sign in normally. */
+        post: operations["SetInitialStaffPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/staff/session": {
         parameters: {
             query?: never;
@@ -1133,6 +1184,168 @@ export interface paths {
         put?: never;
         /** @description New access token from the refresh cookie (rotated). */
         post: operations["RefreshStaffSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/staff/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetMyStaffAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/staff/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ChangeMyPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/staff/me/2fa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["SetUpTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/staff/me/2fa/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Verifies the first code from the app, turns 2FA on and returns 10 recovery codes (shown once). Refresh the session afterwards. */
+        post: operations["EnableTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/staff/me/2fa/recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RenewRecoveryCodes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/staff/me/2fa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DisableTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListStaffAccounts"];
+        put?: never;
+        /** @description Temporary password: the user must choose their own at first sign-in. */
+        post: operations["CreateStaffAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["DeactivateStaffAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ReactivateStaffAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/staff/{id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ResetStaffPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1385,6 +1598,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/settings/business": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Shop name, address, phone, fiscal number used on receipts, packing slips and SMS; placeholderFields lists what is still a placeholder. */
+        get: operations["GetBusinessProfile"];
+        put: operations["UpdateBusinessProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Who did what in the back office (Admin only), newest first. */
+        get: operations["ListAuditEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1434,6 +1681,20 @@ export interface components {
             providerMessageId: null | string;
             response: null | string;
             error: null | string;
+        };
+        AuditEntryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            occurredAtUtc: string;
+            actorId: string;
+            actorEmail: null | string;
+            action: string;
+            entityType: string;
+            entityId: null | string;
+            summary: string;
+            changes: null | string;
+            ipAddress: null | string;
         };
         BatchDto: {
             /** Format: uuid */
@@ -1493,6 +1754,18 @@ export interface components {
             name: string;
             slug: string;
         };
+        BusinessProfileDto: {
+            shopName: string;
+            address: string;
+            phone: string;
+            email: null | string;
+            taxNumber: string;
+            placeholderFields: string[];
+            /** Format: date-time */
+            updatedAtUtc: string;
+            updatedBy: null | string;
+            hasPlaceholders?: boolean;
+        };
         CancelMyOrderRequest: {
             reason: null | string;
         };
@@ -1541,6 +1814,10 @@ export interface components {
             amountUntilFreeDelivery: null | number;
             canCheckout: boolean;
             problems: string[];
+        };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
         };
         CodHeldDto: {
             /** Format: uuid */
@@ -1651,6 +1928,12 @@ export interface components {
             weightGrams?: null | number;
             note?: null | string;
         };
+        CreateStaffRequest: {
+            displayName: string;
+            email: string;
+            role: string;
+            temporaryPassword: string;
+        };
         CreateVariantRequest: {
             sku: string;
             type: components["schemas"]["VariantType"];
@@ -1693,6 +1976,10 @@ export interface components {
             createdAtUtc: string;
             /** Format: date-time */
             lastLoginAtUtc: null | string;
+            /** Format: int32 */
+            orderCount: number;
+            /** Format: int32 */
+            refusedCount: number;
         };
         CustomerOrderDto: {
             /** Format: uuid */
@@ -1749,6 +2036,14 @@ export interface components {
             total: components["schemas"]["CourierCashDto"];
             /** Format: int32 */
             failedReceipts: number;
+        };
+        DayOrdersDto: {
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            orders: number;
+            /** Format: double */
+            revenue: number;
         };
         DeliveryRateDto: {
             countryCode: string;
@@ -1921,6 +2216,12 @@ export interface components {
             gender: null | components["schemas"]["Gender"];
             /** Format: uuid */
             brandId: null | string;
+        };
+        InitialPasswordRequest: {
+            email: string;
+            temporaryPassword: string;
+            newPassword: string;
+            twoFactorCode?: null | string;
         };
         InTransitDto: {
             /** Format: uuid */
@@ -2161,6 +2462,14 @@ export interface components {
             authorId: string;
             text: string;
         };
+        OrdersDashboardDto: {
+            today: components["schemas"]["TodayOrdersDto"];
+            /** Format: int32 */
+            pendingNow: number;
+            last14Days: components["schemas"]["DayOrdersDto"][];
+            topSelling30Days: components["schemas"]["TopSellerDto"][];
+            refusals30Days: components["schemas"]["RefusalRateDto"];
+        };
         OrderSettingsDto: {
             /** Format: int32 */
             maxOpenOrdersPerCustomer: number;
@@ -2170,6 +2479,17 @@ export interface components {
             pendingExpiryHours: number;
             /** Format: date-time */
             updatedAtUtc: string;
+        };
+        PagedResponseOfAuditEntryDto: {
+            items: components["schemas"]["AuditEntryDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalCount: number;
+            /** Format: int32 */
+            totalPages?: number;
         };
         PagedResponseOfCustomerListItemDto: {
             items: components["schemas"]["CustomerListItemDto"][];
@@ -2312,6 +2632,20 @@ export interface components {
             /** Format: date-time */
             settledAtUtc: null | string;
         };
+        PaymentTotalsDto: {
+            /** Format: date */
+            today: string;
+            /** Format: double */
+            collectedToday: number;
+            /** Format: double */
+            collectedThisWeek: number;
+            /** Format: date */
+            weekStart: string;
+            /** Format: double */
+            outstandingAtCouriers: number;
+            /** Format: int32 */
+            failedReceipts: number;
+        };
         PaymentWithReceiptsDto: {
             payment: components["schemas"]["PaymentDto"];
             receipts: components["schemas"]["ReceiptDto"][];
@@ -2446,8 +2780,21 @@ export interface components {
             street: string;
             notes: null | string;
         };
+        RecoveryCodesDto: {
+            recoveryCodes: string[];
+        };
         RefreshTokenRequest: {
             refreshToken: string;
+        };
+        RefusalRateDto: {
+            /** Format: int32 */
+            days: number;
+            /** Format: int32 */
+            delivered: number;
+            /** Format: int32 */
+            refused: number;
+            /** Format: double */
+            rate: number;
         };
         RefusalReportDto: {
             byCourier: components["schemas"]["CourierRefusalsDto"][];
@@ -2477,6 +2824,9 @@ export interface components {
             expiresAtUtc: null | string;
             /** Format: date-time */
             createdAtUtc: string;
+        };
+        ResetStaffPasswordRequest: {
+            temporaryPassword: string;
         };
         SearchFragellaResponse: {
             fromCache: boolean;
@@ -2617,6 +2967,21 @@ export interface components {
             nonGsmCharacters: string;
             warning: null | string;
         };
+        StaffAccountDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            displayName: null | string;
+            role: string;
+            isActive: boolean;
+            mustChangePassword: boolean;
+            twoFactorEnabled: boolean;
+            lockedOut: boolean;
+            /** Format: date-time */
+            lastLoginAtUtc: null | string;
+            /** Format: date-time */
+            createdAtUtc: string;
+        };
         StaffAlertSettingsDto: {
             recipients: string[];
             newOrder: boolean;
@@ -2631,6 +2996,21 @@ export interface components {
         StaffLoginRequest: {
             email: string;
             password: string;
+            twoFactorCode?: null | string;
+            recoveryCode?: null | string;
+        };
+        StaffMeDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            displayName: null | string;
+            roles: string[];
+            twoFactorEnabled: boolean;
+            twoFactorRequired: boolean;
+            /** Format: int32 */
+            recoveryCodesLeft: number;
+            /** Format: date-time */
+            lastLoginAtUtc: null | string;
         };
         StaffSessionResponse: {
             accessToken: string;
@@ -2639,7 +3019,10 @@ export interface components {
             /** Format: uuid */
             userId: string;
             email: string;
+            displayName: null | string;
             roles: string[];
+            twoFactorEnabled: boolean;
+            twoFactorSetupRequired: boolean;
         };
         StatusImportLineResult: {
             /** Format: int32 */
@@ -2712,6 +3095,42 @@ export interface components {
             actorId: string;
             note: null | string;
         };
+        TodayOrdersDto: {
+            /** Format: date */
+            date: string;
+            /** Format: int32 */
+            placed: number;
+            /** Format: int32 */
+            confirmed: number;
+            /** Format: int32 */
+            shipped: number;
+            /** Format: int32 */
+            delivered: number;
+            /** Format: int32 */
+            refused: number;
+            /** Format: int32 */
+            cancelled: number;
+        };
+        TopSellerDto: {
+            /** Format: uuid */
+            fragranceId: string;
+            brandName: string;
+            fragranceName: string;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: double */
+            revenue: number;
+        };
+        TwoFactorCodeRequest: {
+            code: string;
+        };
+        TwoFactorSetupDto: {
+            sharedKey: string;
+            authenticatorUri: string;
+        };
+        UnblockCustomerRequest: {
+            reason: null | string;
+        };
         UnpaidDeliveryDto: {
             /** Format: uuid */
             shipmentId: string;
@@ -2736,6 +3155,13 @@ export interface components {
             countryCode: null | string;
             logoUrl: null | string;
             description: null | string;
+        };
+        UpdateBusinessProfileRequest: {
+            shopName: string;
+            address: string;
+            phone: string;
+            email: null | string;
+            taxNumber: string;
         };
         UpdateDeliveryRateRequest: {
             isEnabled: boolean;
@@ -3752,6 +4178,7 @@ export interface operations {
                 Number?: string;
                 Courier?: string;
                 Sort?: string;
+                CustomerId?: string;
                 Page?: number;
                 PageSize?: number;
             };
@@ -3803,6 +4230,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderCountsDto"];
+                };
+            };
+        };
+    };
+    OrdersDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrdersDashboardDto"];
                 };
             };
         };
@@ -4097,6 +4544,26 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    PaymentTotals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentTotalsDto"];
                 };
             };
         };
@@ -4982,6 +5449,37 @@ export interface operations {
             };
         };
     };
+    SetInitialStaffPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InitialPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
     StartStaffSession: {
         parameters: {
             query?: never;
@@ -5049,6 +5547,306 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffSessionResponse"];
+                };
+            };
+        };
+    };
+    GetMyStaffAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMeDto"];
+                };
+            };
+        };
+    };
+    ChangeMyPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    SetUpTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetupDto"];
+                };
+            };
+        };
+    };
+    EnableTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    RenewRecoveryCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    DisableTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    ListStaffAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAccountDto"][];
+                };
+            };
+        };
+    };
+    CreateStaffAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStaffRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAccountDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    DeactivateStaffAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAccountDto"];
+                };
+            };
+        };
+    };
+    ReactivateStaffAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAccountDto"];
+                };
+            };
+        };
+    };
+    ResetStaffPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetStaffPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffAccountDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };
@@ -5243,6 +6041,7 @@ export interface operations {
             query?: {
                 Search?: string;
                 Status?: string;
+                HasRefusals?: boolean;
                 Page?: number;
                 PageSize?: number;
             };
@@ -5338,7 +6137,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["UnblockCustomerRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -5586,6 +6389,98 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffAlertSettingsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBusinessProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessProfileDto"];
+                };
+            };
+        };
+    };
+    UpdateBusinessProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBusinessProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessProfileDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    ListAuditEntries: {
+        parameters: {
+            query?: {
+                Action?: string;
+                EntityType?: string;
+                EntityId?: string;
+                Actor?: string;
+                Search?: string;
+                From?: string;
+                To?: string;
+                Page?: number;
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedResponseOfAuditEntryDto"];
                 };
             };
             /** @description Bad Request */

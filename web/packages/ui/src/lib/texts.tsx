@@ -19,6 +19,8 @@ export interface UiTexts {
   sortAscending: string;
   sortDescending: string;
   required: string;
+  chartAsTable: string;
+  chartAsChart: string;
 }
 
 export const defaultUiTexts: UiTexts = {
@@ -35,6 +37,8 @@ export const defaultUiTexts: UiTexts = {
   sortAscending: "Sorted ascending",
   sortDescending: "Sorted descending",
   required: "required",
+  chartAsTable: "Show as table",
+  chartAsChart: "Show as chart",
 };
 
 const UiTextsContext = createContext<UiTexts>(defaultUiTexts);

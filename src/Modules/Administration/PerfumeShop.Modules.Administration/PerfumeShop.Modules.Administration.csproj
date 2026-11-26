@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Internal implementation of the Administration module (business profile, audit log).
+    Allowed references: Shared.* and other modules' .Contracts projects ONLY.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Infrastructure\PerfumeShop.Shared.Infrastructure.csproj" />
+    <ProjectReference Include="..\PerfumeShop.Modules.Administration.Contracts\PerfumeShop.Modules.Administration.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PerfumeShop.Modules.Administration.Tests" />
+  </ItemGroup>
+</Project>

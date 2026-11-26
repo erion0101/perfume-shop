@@ -5,6 +5,7 @@
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <ProjectReference Include="..\..\Orders\PerfumeShop.Modules.Orders.Contracts\PerfumeShop.Modules.Orders.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

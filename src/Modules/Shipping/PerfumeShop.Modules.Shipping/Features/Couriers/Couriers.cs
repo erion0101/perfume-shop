@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PerfumeShop.Modules.Shipping.Domain;
 using PerfumeShop.Modules.Shipping.Features.Shared;
 using PerfumeShop.Modules.Shipping.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -122,11 +123,13 @@ internal static class CouriersEndpoint
         admin.MapPost("/couriers", async (CourierRequest request, CouriersHandler h, CancellationToken ct) =>
                 (await h.CreateAsync(request, ct)).ToCreated(c => $"/api/admin/shipping/couriers/{c.Id}"))
             .WithValidation<CourierRequest>()
+            .Audited("Shipping.Courier.Created", "Courier", "Korrier i ri")
             .WithName("CreateCourier");
 
         admin.MapPut("/couriers/{id:guid}", async (Guid id, CourierRequest request, CouriersHandler h, CancellationToken ct) =>
                 (await h.UpdateAsync(id, request, ct)).ToOk())
             .WithValidation<CourierRequest>()
+            .Audited("Shipping.Courier.Updated", "Courier", "Korrieri u ndryshua")
             .WithName("UpdateCourier");
     }
 }

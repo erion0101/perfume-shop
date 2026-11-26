@@ -75,7 +75,7 @@ export Fragella__ApiKey="<your key>"
 
 `Fragella:MonthlyRequestLimit` (default 4500) caps real API calls per month; searches are cached
 for 30 days. Example requests for every endpoint: `src/Bootstrapper/PerfumeShop.Api/http/Catalog.http` and
-`Customers.http`, `Inventory.http`, `Orders.http`, `Shipping.http` (couriers, manifests, courier CSV files, COD settlement; sample CSVs in `http/samples/`) `Payments.http` (payments, NON-FISCAL dev receipts, daily cash summary) and `Notifications.http` (templates, SMS segments, notification log, staff alerts) (each starts with a sign-in request and reuses its token).
+`Customers.http`, `Inventory.http`, `Orders.http`, `Shipping.http` (couriers, manifests, courier CSV files, COD settlement; sample CSVs in `http/samples/`) `Payments.http` (payments, NON-FISCAL dev receipts, daily cash summary), `Administration.http` (business details, audit log), `Notifications.http` (templates, SMS segments, notification log, staff alerts) (each starts with a sign-in request and reuses its token).
 Known gaps before going live: [docs/before-production.md](docs/before-production.md).
 
 Tests (including the module boundary architecture tests and Testcontainers integration tests,
@@ -123,7 +123,16 @@ Other commands: `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest
 Albanian UI for staff; all texts are in `src/i18n/sq.ts`. Sign in with the seeded admin
 (`Auth:SeedAdmin` in user-secrets). The access token lives only in memory; the refresh token is an HttpOnly
 cookie set by `POST /api/auth/staff/session` (path `/api/auth/staff/session`, SameSite=Strict, rotated on every
-refresh). Admin sees Catalog + Inventory; Staff sees Inventory (and may read the catalog to pick variants).
+refresh). Admin sees everything; Staff sees orders, shipping, payments, stock, customers and notifications
+(read-only templates and alert settings) but not the catalog editor, staff accounts, the audit log or settings.
+
+- **2FA:** Admins must turn on an authenticator app (TOTP) on *Llogaria ime* (`Auth:Staff:RequireTwoFactorForAdmins`,
+  default `true`); until then every admin endpoint answers 403 and the panel shows a banner. To try the panel locally
+  without a phone you may set it to `false` in user-secrets: `dotnet user-secrets set "Auth:Staff:RequireTwoFactorForAdmins" false`.
+- **Staff accounts:** Admin creates them on *Administrimi → Stafi* with a temporary password; the person chooses their
+  own at first login.
+- **Business details** (shop name, address, phone, fiscal number) are edited on *Cilësimet → Të dhënat e biznesit*;
+  every page shows a warning while they are still placeholders.
 In development Vite proxies `/api` and `/media` (uploaded photos) to http://localhost:5080.
 
 ### Typed API client (web/packages/api-client)
@@ -146,8 +155,14 @@ desktop and a phone viewport:
 - daily COD flow: order placed through the API (customer signs in with an OTP read from the Development SMS file)
   → confirm in the queue → create shipment → print packing slip and receipt → handover with the manifest →
   courier status CSV (delivered) → courier statement CSV → order CashCollected, payment Collected with fee and net;
-- refused parcel: handed over → refused → back in the warehouse → order Refused, payment Failed, storno receipt. Needs `docker compose up -d
-postgres` and, once, `pnpm --filter @perfumeshop/admin exec playwright install chromium`.
+- refused parcel: handed over → refused → back in the warehouse → order Refused, payment Failed, storno receipt;
+- staff account: Admin creates it → first login changes the temporary password → enables 2FA (code computed from the
+  shown key) → signs in with a code;
+- notification template edited with the live preview (unknown placeholder rejected);
+- delivery fee changed in settings → used by the next cart quote;
+- customer blocked in the admin → OTP and new orders refused, entry in the audit log.
+
+Needs `docker compose up -d postgres` and, once, `pnpm --filter @perfumeshop/admin exec playwright install chromium`.
 
 ## Repository layout
 

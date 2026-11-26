@@ -107,7 +107,16 @@ public sealed class PaymentFlowTests(PaymentsApiFactory factory)
         Assert.Equal((2, 83.80m, 1, 41.90m, 1.42m, 40.48m, 41.90m),
             (row.ShippedCount, row.Expected, row.CollectedCount, row.Collected, row.Fees, row.Net, row.OutstandingAtCourier));
         Assert.True(summary.Total.Expected >= row.Expected);
+
+        // Dashboard totals: today's collected cash is part of this week's, the second parcel is still at the courier.
+        var totals = await (await admin.Get($"{Payments}/totals")).Read<Totals>();
+        Assert.True(totals.CollectedToday >= 41.90m);
+        Assert.True(totals.CollectedThisWeek >= totals.CollectedToday);
+        Assert.True(totals.OutstandingAtCouriers >= 41.90m);
+        Assert.Equal(DayOfWeek.Monday, totals.WeekStart.DayOfWeek);
     }
+
+    private sealed record Totals(DateOnly Today, decimal CollectedToday, decimal CollectedThisWeek, DateOnly WeekStart, decimal OutstandingAtCouriers, int FailedReceipts);
 
     [Fact]
     public async Task Refused_parcel_fails_the_payment_and_issues_a_linked_storno()

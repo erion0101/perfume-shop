@@ -7,6 +7,7 @@ using PerfumeShop.Modules.Catalog.Domain.Common;
 using PerfumeShop.Modules.Catalog.Domain.Fragrances;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -129,5 +130,6 @@ internal static class UpdateFragranceDetailsEndpoint
         admin.MapPut("/fragrances/{id:guid}", async (Guid id, UpdateFragranceDetailsRequest request, UpdateFragranceDetailsHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(id, request, ct)).ToOk())
             .WithValidation<UpdateFragranceDetailsRequest>()
+            .Audited("Catalog.Fragrance.Updated", "Fragrance", "Të dhënat e parfumit u ndryshuan")
             .WithName("UpdateFragranceDetails");
 }

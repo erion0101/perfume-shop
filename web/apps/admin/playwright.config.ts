@@ -60,6 +60,8 @@ export default defineConfig({
         Notifications__DispatchCron: "*/5 * * * * *",
         Notifications__DevelopmentSmsFile: smsFile,
         Customers__Otp__MaxCodesPerIp: "1000",
+        // The seeded e2e admin has no authenticator; the 2FA-for-admins rule itself is covered by the API tests.
+        Auth__Staff__RequireTwoFactorForAdmins: "false",
         Catalog__Images__LocalPath: "../../../web/apps/admin/test-results/e2e-media",
       },
     },

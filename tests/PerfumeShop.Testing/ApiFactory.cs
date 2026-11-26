@@ -139,6 +139,7 @@ public abstract class ApiFactory : WebApplicationFactory<Program>
             ["Auth:SeedAdmin:Email"] = AdminEmail,
             ["Auth:SeedAdmin:Password"] = AdminPassword,
             ["Fragella:ApiKey"] = "test-key",
+            ["Auth:Staff:RequireTwoFactorForAdmins"] = "false", // tests use signed test tokens; 2FA has its own tests
             ["BackgroundJobs:Enabled"] = "false", // tests run jobs directly, deterministically
             ["Logging:LogLevel:Default"] = "Warning",
             ["Logging:LogLevel:Microsoft.EntityFrameworkCore"] = "Warning",

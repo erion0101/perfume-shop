@@ -1401,6 +1401,14 @@
             }
           },
           {
+            "name": "CustomerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -1496,6 +1504,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderCountsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/orders/dashboard": {
+      "get": {
+        "tags": [
+          "Orders (staff)"
+        ],
+        "description": "Today (Kosovo time), pending now, last 14 days, top sellers and refusal rate (30 days).",
+        "operationId": "OrdersDashboard",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdersDashboardDto"
                 }
               }
             }
@@ -1931,6 +1960,27 @@
               "application/problem\u002Bjson": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/payments/totals": {
+      "get": {
+        "tags": [
+          "Payments (staff)"
+        ],
+        "description": "Collected today and this week (Kosovo time), cash still at couriers, failed receipts.",
+        "operationId": "PaymentTotals",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTotalsDto"
                 }
               }
             }
@@ -3273,6 +3323,40 @@
         }
       }
     },
+    "/api/auth/staff/password/initial": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Temporary password \u2192 own password (first sign-in or after an Admin reset). Then sign in normally.",
+        "operationId": "SetInitialStaffPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitialPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/staff/session": {
       "post": {
         "tags": [
@@ -3340,6 +3424,368 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StaffSessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/staff/me": {
+      "get": {
+        "tags": [
+          "Staff (my account)"
+        ],
+        "operationId": "GetMyStaffAccount",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffMeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/staff/me/password": {
+      "post": {
+        "tags": [
+          "Staff (my account)"
+        ],
+        "operationId": "ChangeMyPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/staff/me/2fa/setup": {
+      "post": {
+        "tags": [
+          "Staff (my account)"
+        ],
+        "operationId": "SetUpTwoFactor",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/staff/me/2fa/enable": {
+      "post": {
+        "tags": [
+          "Staff (my account)"
+        ],
+        "description": "Verifies the first code from the app, turns 2FA on and returns 10 recovery codes (shown once). Refresh the session afterwards.",
+        "operationId": "EnableTwoFactor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/staff/me/2fa/recovery-codes": {
+      "post": {
+        "tags": [
+          "Staff (my account)"
+        ],
+        "operationId": "RenewRecoveryCodes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/staff/me/2fa/disable": {
+      "post": {
+        "tags": [
+          "Staff (my account)"
+        ],
+        "operationId": "DisableTwoFactor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/staff": {
+      "get": {
+        "tags": [
+          "Staff accounts (admin)"
+        ],
+        "operationId": "ListStaffAccounts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffAccountDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Staff accounts (admin)"
+        ],
+        "description": "Temporary password: the user must choose their own at first sign-in.",
+        "operationId": "CreateStaffAccount",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAccountDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/staff/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Staff accounts (admin)"
+        ],
+        "operationId": "DeactivateStaffAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/staff/{id}/reactivate": {
+      "post": {
+        "tags": [
+          "Staff accounts (admin)"
+        ],
+        "operationId": "ReactivateStaffAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAccountDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/staff/{id}/reset-password": {
+      "post": {
+        "tags": [
+          "Staff accounts (admin)"
+        ],
+        "operationId": "ResetStaffPassword",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetStaffPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffAccountDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -3608,6 +4054,13 @@
             }
           },
           {
+            "name": "HasRefusals",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -3749,6 +4202,22 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UnblockCustomerRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -4146,6 +4615,167 @@
           }
         }
       }
+    },
+    "/api/admin/settings/business": {
+      "get": {
+        "tags": [
+          "Administration (staff)"
+        ],
+        "description": "Shop name, address, phone, fiscal number used on receipts, packing slips and SMS; placeholderFields lists what is still a placeholder.",
+        "operationId": "GetBusinessProfile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessProfileDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Administration (admin)"
+        ],
+        "operationId": "UpdateBusinessProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBusinessProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessProfileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/audit": {
+      "get": {
+        "tags": [
+          "Administration (admin)"
+        ],
+        "description": "Who did what in the back office (Admin only), newest first.",
+        "operationId": "ListAuditEntries",
+        "parameters": [
+          {
+            "name": "Action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EntityType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "EntityId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Actor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "From",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "To",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfAuditEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem\u002Bjson": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4318,6 +4948,67 @@
             ]
           },
           "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AuditEntryDto": {
+        "required": [
+          "id",
+          "occurredAtUtc",
+          "actorId",
+          "actorEmail",
+          "action",
+          "entityType",
+          "entityId",
+          "summary",
+          "changes",
+          "ipAddress"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "actorEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "changes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ipAddress": {
             "type": [
               "null",
               "string"
@@ -4524,6 +5215,58 @@
           }
         }
       },
+      "BusinessProfileDto": {
+        "required": [
+          "shopName",
+          "address",
+          "phone",
+          "email",
+          "taxNumber",
+          "placeholderFields",
+          "updatedAtUtc",
+          "updatedBy"
+        ],
+        "type": "object",
+        "properties": {
+          "shopName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxNumber": {
+            "type": "string"
+          },
+          "placeholderFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updatedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasPlaceholders": {
+            "type": "boolean"
+          }
+        }
+      },
       "CancelMyOrderRequest": {
         "required": [
           "reason"
@@ -4719,6 +5462,21 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
           }
         }
       },
@@ -5104,6 +5862,29 @@
           }
         }
       },
+      "CreateStaffRequest": {
+        "required": [
+          "displayName",
+          "email",
+          "role",
+          "temporaryPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "temporaryPassword": {
+            "type": "string"
+          }
+        }
+      },
       "CreateVariantRequest": {
         "required": [
           "sku",
@@ -5246,7 +6027,9 @@
           "status",
           "addressCount",
           "createdAtUtc",
-          "lastLoginAtUtc"
+          "lastLoginAtUtc",
+          "orderCount",
+          "refusedCount"
         ],
         "type": "object",
         "properties": {
@@ -5286,6 +6069,14 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "orderCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refusedCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -5475,6 +6266,28 @@
           "failedReceipts": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "DayOrdersDto": {
+        "required": [
+          "date",
+          "orders",
+          "revenue"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "orders": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revenue": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -6203,6 +7016,31 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "InitialPasswordRequest": {
+        "required": [
+          "email",
+          "temporaryPassword",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "temporaryPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          },
+          "twoFactorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -7120,6 +7958,40 @@
           }
         }
       },
+      "OrdersDashboardDto": {
+        "required": [
+          "today",
+          "pendingNow",
+          "last14Days",
+          "topSelling30Days",
+          "refusals30Days"
+        ],
+        "type": "object",
+        "properties": {
+          "today": {
+            "$ref": "#/components/schemas/TodayOrdersDto"
+          },
+          "pendingNow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last14Days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayOrdersDto"
+            }
+          },
+          "topSelling30Days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopSellerDto"
+            }
+          },
+          "refusals30Days": {
+            "$ref": "#/components/schemas/RefusalRateDto"
+          }
+        }
+      },
       "OrderSettingsDto": {
         "required": [
           "maxOpenOrdersPerCustomer",
@@ -7144,6 +8016,39 @@
           "updatedAtUtc": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PagedResponseOfAuditEntryDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntryDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -7594,6 +8499,43 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "PaymentTotalsDto": {
+        "required": [
+          "today",
+          "collectedToday",
+          "collectedThisWeek",
+          "weekStart",
+          "outstandingAtCouriers",
+          "failedReceipts"
+        ],
+        "type": "object",
+        "properties": {
+          "today": {
+            "type": "string",
+            "format": "date"
+          },
+          "collectedToday": {
+            "type": "number",
+            "format": "double"
+          },
+          "collectedThisWeek": {
+            "type": "number",
+            "format": "double"
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "outstandingAtCouriers": {
+            "type": "number",
+            "format": "double"
+          },
+          "failedReceipts": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -8141,6 +9083,20 @@
           }
         }
       },
+      "RecoveryCodesDto": {
+        "required": [
+          "recoveryCodes"
+        ],
+        "type": "object",
+        "properties": {
+          "recoveryCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "RefreshTokenRequest": {
         "required": [
           "refreshToken"
@@ -8149,6 +9105,33 @@
         "properties": {
           "refreshToken": {
             "type": "string"
+          }
+        }
+      },
+      "RefusalRateDto": {
+        "required": [
+          "days",
+          "delivered",
+          "refused",
+          "rate"
+        ],
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "delivered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refused": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rate": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -8249,6 +9232,17 @@
           "createdAtUtc": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ResetStaffPasswordRequest": {
+        "required": [
+          "temporaryPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "temporaryPassword": {
+            "type": "string"
           }
         }
       },
@@ -8755,6 +9749,62 @@
           }
         }
       },
+      "StaffAccountDto": {
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "role",
+          "isActive",
+          "mustChangePassword",
+          "twoFactorEnabled",
+          "lockedOut",
+          "lastLoginAtUtc",
+          "createdAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "role": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "mustChangePassword": {
+            "type": "boolean"
+          },
+          "twoFactorEnabled": {
+            "type": "boolean"
+          },
+          "lockedOut": {
+            "type": "boolean"
+          },
+          "lastLoginAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "createdAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "StaffAlertSettingsDto": {
         "required": [
           "recipients",
@@ -8813,6 +9863,69 @@
           },
           "password": {
             "type": "string"
+          },
+          "twoFactorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recoveryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "StaffMeDto": {
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "roles",
+          "twoFactorEnabled",
+          "twoFactorRequired",
+          "recoveryCodesLeft",
+          "lastLoginAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "twoFactorEnabled": {
+            "type": "boolean"
+          },
+          "twoFactorRequired": {
+            "type": "boolean"
+          },
+          "recoveryCodesLeft": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastLoginAtUtc": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -8822,7 +9935,10 @@
           "accessTokenExpiresAtUtc",
           "userId",
           "email",
-          "roles"
+          "displayName",
+          "roles",
+          "twoFactorEnabled",
+          "twoFactorSetupRequired"
         ],
         "type": "object",
         "properties": {
@@ -8840,11 +9956,23 @@
           "email": {
             "type": "string"
           },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "roles": {
             "type": "array",
             "items": {
               "type": "string"
             }
+          },
+          "twoFactorEnabled": {
+            "type": "boolean"
+          },
+          "twoFactorSetupRequired": {
+            "type": "boolean"
           }
         }
       },
@@ -9143,6 +10271,118 @@
           }
         }
       },
+      "TodayOrdersDto": {
+        "required": [
+          "date",
+          "placed",
+          "confirmed",
+          "shipped",
+          "delivered",
+          "refused",
+          "cancelled"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "placed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "confirmed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "shipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "delivered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "refused": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cancelled": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "TopSellerDto": {
+        "required": [
+          "fragranceId",
+          "brandName",
+          "fragranceName",
+          "quantity",
+          "revenue"
+        ],
+        "type": "object",
+        "properties": {
+          "fragranceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brandName": {
+            "type": "string"
+          },
+          "fragranceName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revenue": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "TwoFactorCodeRequest": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "TwoFactorSetupDto": {
+        "required": [
+          "sharedKey",
+          "authenticatorUri"
+        ],
+        "type": "object",
+        "properties": {
+          "sharedKey": {
+            "type": "string"
+          },
+          "authenticatorUri": {
+            "type": "string"
+          }
+        }
+      },
+      "UnblockCustomerRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UnpaidDeliveryDto": {
         "required": [
           "shipmentId",
@@ -9242,6 +10482,36 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "UpdateBusinessProfileRequest": {
+        "required": [
+          "shopName",
+          "address",
+          "phone",
+          "email",
+          "taxNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "shopName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "taxNumber": {
+            "type": "string"
           }
         }
       },
@@ -9769,6 +11039,12 @@
       "name": "Auth (admin panel session)"
     },
     {
+      "name": "Staff (my account)"
+    },
+    {
+      "name": "Staff accounts (admin)"
+    },
+    {
       "name": "My account"
     },
     {
@@ -9776,6 +11052,12 @@
     },
     {
       "name": "Notifications (staff)"
+    },
+    {
+      "name": "Administration (staff)"
+    },
+    {
+      "name": "Administration (admin)"
     }
   ]
 }

@@ -13,7 +13,7 @@ namespace PerfumeShop.Modules.Shipping.Infrastructure;
 /// A courier-reported refusal (Refused) does not touch the order: the parcel is still on its way back.
 /// Handing a parcel to the courier needs its issued sale receipt, or a staff override with a reason (logged).
 /// </summary>
-internal sealed class ShipmentWorkflow(ShippingDbContext db, IOrdersApi orders, IPaymentsApi payments, TimeProvider timeProvider, ILogger<ShipmentWorkflow> logger)
+internal sealed class ShipmentWorkflow(ShippingDbContext db, IOrdersApi orders, IPaymentsApi payments, TimeProvider timeProvider, ILogger<ShipmentWorkflow> logger, PerfumeShop.Shared.Infrastructure.Audit.IAuditLog audit)
 {
     /// <summary>Receipt state per order: "Issued", "Pending", "Failed", "Voided" or "Missing" (not created yet).</summary>
     public async Task<IReadOnlyDictionary<Guid, string>> ReceiptStatesAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken cancellationToken)
@@ -84,6 +84,13 @@ internal sealed class ShipmentWorkflow(ShippingDbContext db, IOrdersApi orders, 
             }
 
             await db.SaveChangesAsync(cancellationToken);
+            if (to == ShipmentStatus.HandedOver && shipment.ReceiptOverrideReason is not null)
+            {
+                await audit.RecordAsync(new PerfumeShop.Shared.Infrastructure.Audit.AuditEntry(
+                    "Shipping.Shipment.HandedOverWithoutReceipt", "Shipment", shipment.Id.ToString(),
+                    $"{shipment.TrackingNumber} ({shipment.OrderNumber}) pa kupon fiskal: {shipment.ReceiptOverrideReason}",
+                    new Dictionary<string, object?> { ["reason"] = shipment.ReceiptOverrideReason, ["orderNumber"] = shipment.OrderNumber }), cancellationToken);
+            }
         }
 
         return (shipment, moved.Value);

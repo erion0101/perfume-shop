@@ -38,8 +38,10 @@ public static class AuthExtensions
                 };
             });
 
+        services.AddOptions<StaffSecurityOptions>().BindConfiguration(StaffSecurityOptions.SectionName);
+        services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, AdminTwoFactorHandler>();
         services.AddAuthorizationBuilder()
-            .AddPolicy(Policies.Admin, policy => policy.RequireRole(Roles.Admin))
+            .AddPolicy(Policies.Admin, policy => policy.RequireRole(Roles.Admin).AddRequirements(new AdminTwoFactorRequirement()))
             .AddPolicy(Policies.Staff, policy => policy.RequireRole(Roles.Admin, Roles.Staff))
             .AddPolicy(Policies.Customer, policy => policy.RequireRole(Roles.Customer).RequireClaim(PlatformClaims.CustomerId));
 

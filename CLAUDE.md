@@ -108,6 +108,7 @@ and `docs/before-production.md` (everything dev-only or open; keep it up to date
 
 | Module | Status | Owns |
 |---|---|---|
+| Administration | done | business details (receipts, packing slips, SMS; seeded from config), audit log (`IAuditLog`, `.Audited(...)` endpoint filter) |
 | Shared | done | `IModule`, Result/Error → ProblemDetails, FluentValidation filter, JWT policies (Admin / StaffOrAdmin / Customer), per-module outbox (Hangfire, `FOR UPDATE SKIP LOCKED`, 10 attempts) + inbox, dead-letter and job-failure hooks |
 | Catalog | done | brands, fragrances (notes, accords, Albanian text), variants, Fragella import (budget, 30-day search cache, raw JSON stored) |
 | Customers | done | customers, addresses, ASP.NET Identity (schema `identity`), phone OTP, JWT + refresh-token rotation, seeded admin from config |
@@ -116,10 +117,13 @@ and `docs/before-production.md` (everything dev-only or open; keep it up to date
 | Shipping | done | couriers (must accept UN1266), shipments, tracking numbers, manifests, courier CSV files, COD settlement statements, reports |
 | Payments | done | one COD payment per order, fiscal receipts (sale at shipment, storno on refusal) behind `IFiscalReceiptService` |
 | Notifications | done | customer SMS + staff alert emails, Albanian templates in the DB, notification log, quiet hours |
-| Admin panel (web/apps/admin) | parts 1-2 done | part 1: foundation (login, layout, roles, i18n `sq.ts`, generated client), Catalog, Inventory. Part 2: Orders (list with status tabs + 30 s refresh + new-order alert, confirmation queue with tel: links and refusal risk, detail), Shipping (shipments, couriers, create shipment + packing slip, daily handover with receipt override, status CSV import, COD settlement report, reports), Payments (list, daily cash, receipts with print/retry). Part 3 (notifications, settings, customers, staff) next |
+| Admin panel (web/apps/admin) | done | part 1: foundation (login, layout, roles, i18n `sq.ts`, generated client), Catalog, Inventory. Part 2: Orders, Shipping, Payments. Part 3: Customers (list, detail, block/unblock with reason), Staff accounts (create with temporary password, deactivate, reset, last login), My account (password, TOTP 2FA + recovery codes, required for Admin), Audit log, Notifications (templates with segment counts, editor with live preview, log with attempts + resend, staff alert settings), Settings (business details + placeholder banner, delivery fees, anti-fake-order rules, Fragella usage), Dashboard (today, money, alerts, 14-day chart, top sellers, refusal rate) |
 | Storefront (web/apps/storefront) | not started | |
 
 ### Decisions made so far (binding)
+- **NEVER create or change anything in `web/apps/storefront`** (not even after the admin is finished, not for
+  shared refactors). The storefront will be designed separately later. Shared packages (`web/packages/*`) may change
+  only in ways that keep the storefront building untouched.
 - **Cash on Delivery only.** No card payments, no gateway. `IPaymentProvider` has only `CashOnDeliveryProvider`.
 - **Shipping owns couriers, tracking and COD settlement.** Every shipping transition of an order (Shipped, Delivered,
   Refused, CashCollected) goes through Shipping, which calls `IOrdersApi`; Orders has no ship/deliver endpoints and never
@@ -145,7 +149,11 @@ and `docs/before-production.md` (everything dev-only or open; keep it up to date
   has a schema; JSON numbers are strict (no numbers as strings).
 - **Admin auth:** access token in memory only; refresh token in an HttpOnly, Secure, SameSite=Strict cookie
   (`/api/auth/staff/session`, rotated, reuse revokes the session), plus the `X-PerfumeShop-Client` header against CSRF.
-  Admin: Catalog + Inventory; Staff: Inventory and read-only catalog lists (to pick variants).
+  Admin: everything; Staff: orders, shipping, payments, inventory, customers, notifications (read-only templates/alerts)
+  and read-only catalog lists (to pick variants). Admin tokens need the `mfa` claim (2FA) unless
+  `Auth:Staff:RequireTwoFactorForAdmins` is false (only the e2e run sets that).
+- **Audit:** every state-changing admin endpoint records who did what (`IAuditLog`, Administration module); prices with
+  before → after. Business details live in `administration.business_profile`, never hard-coded.
 - **Admin UI texts** are Albanian and live only in `web/apps/admin/src/i18n/sq.ts` (API error codes → messages too).
   Money and dates are formatted by hand (decimal comma, Europe/Belgrade), never with browser locale data.
 

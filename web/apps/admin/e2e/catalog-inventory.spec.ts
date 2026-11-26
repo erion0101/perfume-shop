@@ -11,7 +11,7 @@ async function signIn(page: Page) {
   await page.getByLabel("Email").fill(e2eAdmin.email);
   await page.getByLabel("Fjalëkalimi").fill(e2eAdmin.password);
   await page.getByRole("button", { name: "Hyr" }).click();
-  await expect(page.getByRole("heading", { name: "Mirë se vini" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Përmbledhje" })).toBeVisible();
 }
 
 async function openMenu(page: Page, link: string) {
@@ -30,7 +30,7 @@ test("import from Fragella → add variant → receive stock → publish", async
 
   // Refresh keeps the session (access token in memory, refresh token in the HttpOnly cookie).
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Mirë se vini" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Përmbledhje" })).toBeVisible();
 
   // 1. Import from the (mocked) Fragella API.
   await openMenu(page, "Import nga Fragella");

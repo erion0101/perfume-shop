@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Public surface of the Administration module: the business profile used on receipts, slips and SMS. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\PerfumeShop.Shared.Kernel\PerfumeShop.Shared.Kernel.csproj" />
+  </ItemGroup>
+</Project>

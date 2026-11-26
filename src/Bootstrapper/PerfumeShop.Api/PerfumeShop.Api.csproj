@@ -22,5 +22,6 @@
     <ProjectReference Include="..\..\Modules\Shipping\PerfumeShop.Modules.Shipping\PerfumeShop.Modules.Shipping.csproj" />
     <ProjectReference Include="..\..\Modules\Customers\PerfumeShop.Modules.Customers\PerfumeShop.Modules.Customers.csproj" />
     <ProjectReference Include="..\..\Modules\Notifications\PerfumeShop.Modules.Notifications\PerfumeShop.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\..\Modules\Administration\PerfumeShop.Modules.Administration\PerfumeShop.Modules.Administration.csproj" />
   </ItemGroup>
 </Project>

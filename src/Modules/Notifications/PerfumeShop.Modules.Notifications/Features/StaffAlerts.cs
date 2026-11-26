@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using PerfumeShop.Modules.Notifications.Domain;
 using PerfumeShop.Modules.Notifications.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Auth;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
@@ -64,6 +65,7 @@ internal static class StaffAlertsEndpoint
                 (await h.UpdateAsync(request, user.GetUserId()?.ToString() ?? "unknown", ct)).ToOk())
             .RequireAuthorization(Policies.Admin)
             .WithValidation<UpdateStaffAlertSettingsRequest>()
+            .Audited("Settings.StaffAlerts.Updated", "StaffAlertSettings", "Njoftimet për stafin u ndryshuan")
             .WithName("UpdateStaffAlertSettings")
             .WithDescription("Admin. Recipients (emails) and which alerts are on: new order, failed fiscal receipt, low stock, unpaid deliveries, job failures.");
     }

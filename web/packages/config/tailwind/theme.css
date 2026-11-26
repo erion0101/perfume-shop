@@ -28,6 +28,8 @@
   --color-destructive-foreground: oklch(0.99 0 0);
   --color-success: oklch(0.55 0.13 150);
   --color-warning: oklch(0.72 0.15 75);
+  /* Single-series chart marks (validated: lightness band, chroma floor, contrast >= 3:1 on white). */
+  --color-chart-1: oklch(0.6 0.13 65);
 
   --radius-md: 0.5rem;
 

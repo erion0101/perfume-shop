@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\Payments\PerfumeShop.Modules.Payments.Contracts\PerfumeShop.Modules.Payments.Contracts.csproj" />
     <ProjectReference Include="..\..\Inventory\PerfumeShop.Modules.Inventory.Contracts\PerfumeShop.Modules.Inventory.Contracts.csproj" />
     <ProjectReference Include="..\..\Catalog\PerfumeShop.Modules.Catalog.Contracts\PerfumeShop.Modules.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\Administration\PerfumeShop.Modules.Administration.Contracts\PerfumeShop.Modules.Administration.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

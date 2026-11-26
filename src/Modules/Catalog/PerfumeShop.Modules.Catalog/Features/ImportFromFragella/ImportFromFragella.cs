@@ -9,6 +9,7 @@ using PerfumeShop.Modules.Catalog.Domain.Fragrances;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
 using PerfumeShop.Modules.Catalog.Infrastructure.Fragella;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -158,6 +159,7 @@ internal static class ImportFromFragellaEndpoint
         admin.MapPost("/fragrances/import", async (ImportFromFragellaRequest request, ImportFromFragellaHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(request, ct)).ToCreated(f => $"/api/admin/catalog/fragrances/{f.Id}"))
             .WithValidation<ImportFromFragellaRequest>()
+            .Audited("Catalog.Fragrance.Imported", "Fragrance", "Import nga Fragella")
             .WithName("ImportFromFragella")
             .Produces<FragranceAdminDto>(StatusCodes.Status201Created);
 }

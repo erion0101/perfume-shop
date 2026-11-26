@@ -12,6 +12,7 @@ namespace PerfumeShop.Modules.Notifications.Infrastructure;
 internal sealed class NotificationQueue(
     NotificationsDbContext db,
     IOptions<NotificationOptions> options,
+    PerfumeShop.Modules.Administration.Contracts.IBusinessProfileApi business,
     QuietHours quietHours,
     TimeProvider timeProvider,
     ILogger<NotificationQueue> logger)
@@ -50,7 +51,7 @@ internal sealed class NotificationQueue(
             return await Skip(templateKey, template is null ? "template missing" : "template disabled");
         }
 
-        var rendered = Render(template, definition, values, options.Value);
+        var rendered = Render(template, definition, values, options.Value.WithShop(await business.GetAsync(ct)));
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var queued = 0;
         foreach (var recipient in recipients.Select(r => r.Trim()).Distinct(StringComparer.OrdinalIgnoreCase))

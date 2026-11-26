@@ -11,7 +11,10 @@ export const adminSession: Session = {
   expiresAt: Date.now() + 15 * 60_000,
   userId: "00000000-0000-0000-0000-000000000001",
   email: "admin@perfumeshop.test",
+  displayName: "Admin",
   roles: ["Admin"],
+  twoFactorEnabled: true,
+  twoFactorSetupRequired: false,
 };
 
 type Handler = (request: Request, body: unknown) => Response | Promise<Response>;

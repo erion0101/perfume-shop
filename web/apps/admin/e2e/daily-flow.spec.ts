@@ -7,7 +7,7 @@ async function signIn(page: Page) {
   await page.getByLabel("Email").fill(e2eAdmin.email);
   await page.getByLabel("Fjalëkalimi").fill(e2eAdmin.password);
   await page.getByRole("button", { name: "Hyr" }).click();
-  await expect(page.getByRole("heading", { name: "Mirë se vini" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Përmbledhje" })).toBeVisible();
 }
 
 const csv = (rows: string[]) => ({ name: "courier.csv", mimeType: "text/csv", buffer: Buffer.from(`${rows.join("\n")}\n`, "utf8") });

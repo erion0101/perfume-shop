@@ -1,4 +1,6 @@
 using System.Reflection;
+using PerfumeShop.Modules.Administration;
+using PerfumeShop.Modules.Administration.Contracts;
 using PerfumeShop.Modules.Catalog;
 using PerfumeShop.Modules.Catalog.Contracts;
 using PerfumeShop.Modules.Customers;
@@ -40,6 +42,7 @@ internal static class ModuleAssemblies
         new("Shipping", typeof(ShippingModule).Assembly, typeof(IShippingApi).Assembly),
         new("Customers", typeof(CustomersModule).Assembly, typeof(ICustomersApi).Assembly),
         new("Notifications", typeof(NotificationsModule).Assembly, typeof(INotificationsApi).Assembly),
+        new("Administration", typeof(AdministrationModule).Assembly, typeof(IBusinessProfileApi).Assembly),
     ];
 
     public static ModuleAssembly Get(string name) => All.Single(m => m.Name == name);

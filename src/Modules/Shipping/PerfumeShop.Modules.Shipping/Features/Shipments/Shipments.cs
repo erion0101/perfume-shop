@@ -10,6 +10,7 @@ using PerfumeShop.Modules.Shipping.Domain;
 using PerfumeShop.Modules.Shipping.Features.Shared;
 using PerfumeShop.Modules.Shipping.Infrastructure;
 using PerfumeShop.Modules.Shipping.Infrastructure.Couriers;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -36,7 +37,7 @@ internal sealed class ListShipmentsValidator : AbstractValidator<ListShipmentsQu
     }
 }
 
-internal sealed class ShipmentsHandler(ShippingDbContext db, ShipmentWorkflow workflow, IOrdersApi orders, IOptions<ShopInfo> shop) : IHandler
+internal sealed class ShipmentsHandler(ShippingDbContext db, ShipmentWorkflow workflow, IOrdersApi orders, ShopDetails shop) : IHandler
 {
     public async Task<PagedResponse<ShipmentDto>> ListAsync(ListShipmentsQuery query, CancellationToken ct)
     {
@@ -121,7 +122,7 @@ internal sealed class ShipmentsHandler(ShippingDbContext db, ShipmentWorkflow wo
         }
 
         var order = await orders.GetOrderAsync(shipment.OrderId, ct);
-        return order is null ? ShippingFeatureErrors.OrderNotFound : PackingSlips.Render(shipment, order, shop.Value);
+        return order is null ? ShippingFeatureErrors.OrderNotFound : PackingSlips.Render(shipment, order, await shop.GetAsync(ct));
     }
 }
 
@@ -146,6 +147,7 @@ internal static class ShipmentsEndpoint
 
         staff.MapPost("/shipments/{id:guid}/cash-collected", async (Guid id, ManualCashRequest request, ClaimsPrincipal user, ShipmentsHandler h, TimeProvider time, CancellationToken ct) =>
                 (await h.CashCollectedAsync(id, request, user.Actor(), time, ct)).ToOk())
+            .Audited("Shipping.Shipment.CashRecorded", "Shipment", "Para të regjistruara manualisht")
             .WithName("RecordCashCollected")
             .WithDescription("Manual COD booking, e.g. for a statement line with a wrong amount (note required when the amount differs).");
 
@@ -154,6 +156,7 @@ internal static class ShipmentsEndpoint
                     ? Error.Validation("Shipping.Shipment.OverrideFlagMissing", "Set overrideMissingReceipt = true to use an override reason.").ToProblem()
                     : (await h.MoveAsync(id, ShipmentStatus.HandedOver, user.Actor(), request?.Note, ct,
                         request?.OverrideMissingReceipt == true ? request.OverrideReason ?? string.Empty : null)).ToOk())
+            .Audited("Shipping.Shipment.HandedOver", "Shipment", "Pakoja u dorëzua te korrieri")
             .WithName("HandOverShipment")
             .WithDescription("Needs an issued sale receipt; otherwise 409, or overrideMissingReceipt = true with a reason (logged).");
         MapStep(staff, "in-transit", ShipmentStatus.InTransit, "MarkShipmentInTransit");
@@ -165,5 +168,6 @@ internal static class ShipmentsEndpoint
     private static void MapStep(RouteGroupBuilder staff, string path, ShipmentStatus to, string name) =>
         staff.MapPost($"/shipments/{{id:guid}}/{path}", async (Guid id, StatusNoteRequest? request, ClaimsPrincipal user, ShipmentsHandler h, CancellationToken ct) =>
                 (await h.MoveAsync(id, to, user.Actor(), request?.Note, ct)).ToOk())
+            .Audited($"Shipping.Shipment.{to}", "Shipment", $"Statusi i pakos: {to}")
             .WithName(name);
 }

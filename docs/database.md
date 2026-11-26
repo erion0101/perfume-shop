@@ -1,8 +1,8 @@
 # Database plan
 
 One PostgreSQL database (`perfumeshop`), **one schema per module**. This document is the
-planned data model for review. The `catalog`, `customers`, `identity`, `inventory`, `orders` and
-`shipping` schemas are implemented; every other schema is a plan and will change as each module is built.
+data model. Every module schema is implemented: `catalog`, `customers` + `identity`, `inventory`, `orders`,
+`shipping`, `payments`, `notifications` and `administration` (plus `hangfire`, owned by the job library).
 
 ## Conventions (all modules)
 
@@ -161,16 +161,17 @@ TODO (Hangfire): delete rows older than 30 days.
 ### `identity` schema (owned by Customers)
 | Table | Main columns | Keys / notes |
 |---|---|---|
-| `users` | Identity columns (`id`, `user_name`, `normalized_user_name`, `email`, `normalized_email`, `phone_number`, `phone_number_confirmed`, `password_hash`, `security_stamp`, `lockout_end`, `access_failed_count`, …) + `customer_id` null, `display_name`, `created_at_utc` | PK `id`; unique `normalized_user_name`; **unique FK** `customer_id → customers.customers` (restrict). Customers: user name = phone, no password. Staff: user name = email |
+| `users` | Identity columns (`id`, `user_name`, `normalized_user_name`, `email`, `normalized_email`, `phone_number`, `phone_number_confirmed`, `password_hash`, `security_stamp`, `lockout_end`, `access_failed_count`, …) + `customer_id` null, `display_name`, `created_at_utc`, `must_change_password` (temporary password set by an Admin), `is_deactivated` (staff only; refused at login and refresh), `last_login_at_utc`; Identity's `two_factor_enabled` for staff TOTP | PK `id`; unique `normalized_user_name`; **unique FK** `customer_id → customers.customers` (restrict). Customers: user name = phone, no password. Staff: user name = email |
 | `roles` | `id`, `name`, `normalized_name` | seeded on startup: **Admin**, **Staff**, **Customer** |
 | `user_roles` | `user_id`, `role_id` | PK (`user_id`, `role_id`) |
-| `user_claims`, `role_claims`, `user_logins`, `user_tokens` | standard Identity tables | |
+| `user_claims`, `role_claims`, `user_logins`, `user_tokens` | standard Identity tables | `user_tokens` holds the staff authenticator key and the hashed recovery codes (Identity defaults) |
 | `refresh_tokens` | `id`, `user_id`, `token_hash` (SHA-256), `family_id`, `created_at_utc`, `expires_at_utc`, `created_by_ip`, `revoked_at_utc`, `revocation_reason`, `replaced_by_token_id` | unique `token_hash`; FK → users (cascade). Rotated on every refresh; re-using a revoked token revokes the whole family. Customers 30 days, staff 12 hours. TODO (Hangfire): delete expired rows |
 
 Roles: **Admin** (everything, incl. catalog and settings), **Staff** (orders, shipping, stock, customers),
 **Customer** (own account and orders). Customers sign in with phone OTP; Admin/Staff with email + password
-(lockout after 5 failures; 2FA later). The first Admin comes from `Auth:SeedAdmin` (user-secrets / env vars).
-Access tokens are JWTs (15 minutes) with `sub`, `role` and, for customers, `customer_id`.
+(lockout after 5 failures; TOTP 2FA, required for Admin by default). The first Admin comes from `Auth:SeedAdmin` (user-secrets / env vars).
+Access tokens are JWTs (15 minutes) with `sub`, `role` and, for customers, `customer_id`; staff tokens also carry
+`email` and `mfa=true` when signed in with 2FA.
 
 ---
 
@@ -542,6 +543,38 @@ orders.orders.id              ← shipping.shipments.order_id (unique), payments
 shipping.settlements.id       ← payments.payments.settlement_id
 ```
 
+## administration (implemented)
+
+Settings that belong to the shop as a whole and the audit log. Module `PerfumeShop.Modules.Administration`;
+other modules read the business details through `IBusinessProfileApi` (cached 30 s) and write audit entries
+through `IAuditLog` (Shared.Infrastructure).
+
+### `administration.business_profile` (single row)
+| Column | Notes |
+|---|---|
+| `id` int | always `1` (check constraint) |
+| `shop_name`, `address`, `phone`, `email` null, `tax_number` | shown on fiscal receipts, packing slips, manifests and SMS. Seeded once from `Payments:Business`; afterwards edited only in the admin. `tax_number` (NUI) 8-10 digits |
+| `updated_by`, `created_at_utc`, `updated_at_utc`, `xmin` | concurrency on `xmin` |
+
+Placeholder values (empty name/address, phone empty or `+383 44 000 000`, tax number empty or all zeros) are reported
+as `placeholderFields`; the admin shows a warning banner on every page while there are any.
+
+### `administration.audit_entries` (append-only)
+| Column | Notes |
+|---|---|
+| `id` uuid, `occurred_at_utc` | |
+| `actor_id`, `actor_email` | from the JWT (`sub`, `email`) |
+| `action` | e.g. `Catalog.Variant.PriceChanged`, `Inventory.Stock.Adjusted`, `Orders.Order.Cancelled`, `Shipping.Shipment.HandedOverWithoutReceipt`, `Customers.Customer.Blocked`, `Staff.Account.Created`, `Settings.Business.Updated` |
+| `entity_type`, `entity_id`, `summary` | summary in Albanian, e.g. `SKU: çmimi 39.90 → 42.90 EUR` |
+| `changes` jsonb null | request values (passwords, codes and tokens redacted) or before/after |
+| `ip_address` | |
+
+Indexes: `occurred_at_utc`, (`action`, `occurred_at_utc`), `actor_id`, (`entity_type`, `entity_id`). Written by the
+`.Audited(...)` endpoint filter after a successful (2xx) response, or explicitly where a before/after is needed.
+Best effort: a failed write is logged and never fails the action.
+
+---
+
 ## Decisions log
 
 1. **Stock** lives in Inventory, not Catalog.
@@ -558,3 +591,6 @@ shipping.settlements.id       ← payments.payments.settlement_id
 12. **Notifications render at queue time.** The log stores the exact text sent; editing a template affects only new messages. Each message has a unique dedup key (template + source + recipient).
 13. **Quiet hours (22:00-08:00 Kosovo time) apply to customer SMS only.** Staff emails go out at once; OTP codes bypass the queue entirely.
 14. **SMS cost:** customer SMS are transliterated by default (ë→e, ç→c) so they stay one GSM-7 segment; the template list shows the segment count with and without transliteration.
+15. **Business details live in the database** (`administration.business_profile`), not in configuration, so the owner can correct them without a deploy; configuration only seeds the first row.
+16. **Audit log is one table for all modules** (`administration.audit_entries`), written through `IAuditLog` from any module, read only by Admin. It never blocks the action it records.
+17. **Admins must use 2FA** (`Auth:Staff:RequireTwoFactorForAdmins`, default true): enforced by the Admin policy through the token's `mfa` claim, so it holds for every admin endpoint, not only the UI.

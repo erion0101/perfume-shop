@@ -16,7 +16,7 @@ namespace PerfumeShop.Modules.Orders.Features.ListOrders;
 /// <param name="Courier">Part of the courier name (orders that shipped with it).</param>
 /// <param name="Sort">-placed (default, newest first) or placed (oldest first, e.g. the confirmation queue).</param>
 internal sealed record ListOrdersQuery(
-    string? Status, DateOnly? From, DateOnly? To, string? Phone, string? Number, string? Courier, string? Sort, int Page = 1, int PageSize = 50);
+    string? Status, DateOnly? From, DateOnly? To, string? Phone, string? Number, string? Courier, string? Sort, Guid? CustomerId = null, int Page = 1, int PageSize = 50);
 
 /// <summary>Same filters as the list, without status: the numbers on the status tabs.</summary>
 internal sealed record OrderCountsQuery(DateOnly? From, DateOnly? To, string? Phone, string? Number, string? Courier);
@@ -77,6 +77,11 @@ internal sealed class ListOrdersHandler(OrdersDbContext db) : IHandler
         if (Enum.TryParse<OrderStatus>(query.Status, ignoreCase: true, out var status))
         {
             orders = orders.Where(o => o.Status == status);
+        }
+
+        if (query.CustomerId is { } customerId)
+        {
+            orders = orders.Where(o => o.CustomerId == customerId);
         }
 
         var total = await orders.CountAsync(cancellationToken);

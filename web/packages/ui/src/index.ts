@@ -5,6 +5,7 @@ export { defaultUiTexts, UiTextsProvider, useUiTexts, type UiTexts } from "./lib
 export { Badge, badgeVariants, StatusBadge, type BadgeTone } from "./components/badge";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Card, CardContent, CardHeader, CardTitle } from "./components/card";
+export { BarList, ColumnChart, StatTile, type ChartDatum } from "./components/charts";
 export { DataTable, type DataTableColumn, type DataTableProps, type SortState } from "./components/data-table";
 export { ConfirmDialog, Dialog } from "./components/dialog";
 export { FormField, SelectField, TextareaField, TextField, type SelectOption } from "./components/form-field";

@@ -13,7 +13,9 @@ using PerfumeShop.Shared.Kernel;
 
 namespace PerfumeShop.Modules.Customers.Features.StaffLogin;
 
-internal sealed record StaffLoginRequest(string Email, string Password);
+/// <param name="TwoFactorCode">6-digit authenticator code (when 2FA is on).</param>
+/// <param name="RecoveryCode">One-time recovery code instead of the authenticator code.</param>
+internal sealed record StaffLoginRequest(string Email, string Password, string? TwoFactorCode = null, string? RecoveryCode = null);
 
 internal sealed class StaffLoginValidator : AbstractValidator<StaffLoginRequest>
 {
@@ -21,16 +23,19 @@ internal sealed class StaffLoginValidator : AbstractValidator<StaffLoginRequest>
     {
         RuleFor(x => x.Email).NotEmpty().MaximumLength(254);
         RuleFor(x => x.Password).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.TwoFactorCode).MaximumLength(10);
+        RuleFor(x => x.RecoveryCode).MaximumLength(20);
     }
 }
 
 /// <summary>
 /// Email + password for Admin and Staff (customers have no password). Locks the account for
-/// 15 minutes after 5 wrong passwords. TODO: optional 2FA (TOTP) for staff.
+/// 15 minutes after 5 wrong passwords or 2FA codes. Order: password → temporary password → second factor.
 /// </summary>
-internal sealed class StaffLoginHandler(UserManager<AppUser> users, TokenService tokens) : IHandler
+internal sealed class StaffLoginHandler(UserManager<AppUser> users, TokenService tokens, TimeProvider timeProvider) : IHandler
 {
-    public async Task<Result<LoginResponse>> HandleAsync(StaffLoginRequest request, string? ipAddress, CancellationToken cancellationToken)
+    /// <summary>Checks email + password (and the second factor) and returns the user, without issuing tokens.</summary>
+    public async Task<Result<AppUser>> AuthenticateAsync(StaffLoginRequest request, bool allowTemporaryPassword = false)
     {
         var user = await users.FindByEmailAsync(request.Email.Trim());
         if (user is null)
@@ -38,7 +43,7 @@ internal sealed class StaffLoginHandler(UserManager<AppUser> users, TokenService
             return CustomerFeatureErrors.InvalidCredentials;
         }
 
-        if (await users.IsLockedOutAsync(user))
+        if (await users.IsLockedOutAsync(user) && !user.IsDeactivated)
         {
             return CustomerFeatureErrors.LockedOut;
         }
@@ -52,11 +57,53 @@ internal sealed class StaffLoginHandler(UserManager<AppUser> users, TokenService
         if (!await users.CheckPasswordAsync(user, request.Password))
         {
             await users.AccessFailedAsync(user);
-            return await users.IsLockedOutAsync(user) ? CustomerFeatureErrors.LockedOut : CustomerFeatureErrors.InvalidCredentials;
+            return await users.IsLockedOutAsync(user) && !user.IsDeactivated ? CustomerFeatureErrors.LockedOut : CustomerFeatureErrors.InvalidCredentials;
+        }
+
+        if (user.IsDeactivated)
+        {
+            return CustomerFeatureErrors.Deactivated; // only told after the right password
+        }
+
+        if (user.MustChangePassword && !allowTemporaryPassword)
+        {
+            return CustomerFeatureErrors.PasswordChangeRequired;
+        }
+
+        if (user.TwoFactorEnabled)
+        {
+            var code = request.TwoFactorCode?.Replace(" ", "", StringComparison.Ordinal).Replace("-", "", StringComparison.Ordinal);
+            var recovery = request.RecoveryCode?.Trim();
+            if (string.IsNullOrEmpty(code) && string.IsNullOrEmpty(recovery))
+            {
+                return CustomerFeatureErrors.TwoFactorRequired;
+            }
+
+            var valid = !string.IsNullOrEmpty(code)
+                ? await users.VerifyTwoFactorTokenAsync(user, users.Options.Tokens.AuthenticatorTokenProvider, code)
+                : (await users.RedeemTwoFactorRecoveryCodeAsync(user, recovery!)).Succeeded;
+            if (!valid)
+            {
+                await users.AccessFailedAsync(user);
+                return await users.IsLockedOutAsync(user) ? CustomerFeatureErrors.LockedOut : CustomerFeatureErrors.InvalidTwoFactorCode;
+            }
         }
 
         await users.ResetAccessFailedCountAsync(user);
-        return LoginResponse.From(await tokens.IssueAsync(user, ipAddress, cancellationToken));
+        return user;
+    }
+
+    public async Task<Result<LoginResponse>> HandleAsync(StaffLoginRequest request, string? ipAddress, CancellationToken cancellationToken)
+    {
+        var user = await AuthenticateAsync(request);
+        if (user.IsFailure)
+        {
+            return user.Error;
+        }
+
+        user.Value.LastLoginAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+        await users.UpdateAsync(user.Value);
+        return LoginResponse.From(await tokens.IssueAsync(user.Value, ipAddress, cancellationToken));
     }
 }
 

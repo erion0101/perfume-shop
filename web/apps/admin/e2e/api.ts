@@ -94,19 +94,25 @@ async function otpCode(phone: string): Promise<string> {
   return code!;
 }
 
-/** A new customer (phone OTP like the storefront) who orders one bottle. Returns the order. */
-export async function placeOrder(variantId: string) {
+/** A new customer signed in with a phone OTP (like the storefront), with a name and one address. */
+export async function newCustomer() {
   const phone = `+38349${String(Date.now()).slice(-4)}${String(++counter).padStart(2, "0")}`;
   const anonymous = await client();
   await ok(await anonymous.post("/api/auth/otp/request", { data: { phone } }));
   const login = await ok<{ accessToken: string }>(await anonymous.post("/api/auth/otp/verify", { data: { phone, code: await otpCode(phone) } }));
-  const customer = await client(login.accessToken);
-  await ok(await customer.put("/api/customers/me", { data: { fullName: "Arbër E2E" } }));
-  await ok(await customer.post("/api/customers/me/addresses", { data: { city: "Lipjan", street: "Rr. Adem Jashari 12", notes: "kati 2" } }));
-  return ok<{ id: string; number: string; total: number }>(
-    await customer.post("/api/orders", {
-      data: { items: [{ variantId, quantity: 1 }] },
-      headers: { "Idempotency-Key": crypto.randomUUID() },
-    }),
-  );
+  const api = await client(login.accessToken);
+  const profile = await ok<{ id: string }>(await api.put("/api/customers/me", { data: { fullName: "Arbër E2E" } }));
+  await ok(await api.post("/api/customers/me/addresses", { data: { city: "Lipjan", street: "Rr. Adem Jashari 12", notes: "kati 2" } }));
+  return { phone, id: profile.id, api, anonymous };
 }
+
+export const order = (api: APIRequestContext, variantId: string) =>
+  api.post("/api/orders", { data: { items: [{ variantId, quantity: 1 }] }, headers: { "Idempotency-Key": crypto.randomUUID() } });
+
+/** A new customer who orders one bottle. Returns the order. */
+export async function placeOrder(variantId: string) {
+  const customer = await newCustomer();
+  return ok<{ id: string; number: string; total: number }>(await order(customer.api, variantId));
+}
+
+export { client, ok };

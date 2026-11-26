@@ -4,7 +4,7 @@ namespace PerfumeShop.Modules.Customers.Infrastructure.Identity;
 
 /// <summary>
 /// Login account (schema "identity"). Customers: UserName = phone, no password, OTP login.
-/// Admin/Staff: UserName = email, password login (2FA later).
+/// Admin/Staff: UserName = email, password login, optional/required TOTP 2FA (authenticator app).
 /// </summary>
 internal sealed class AppUser : IdentityUser<Guid>
 {
@@ -16,6 +16,14 @@ internal sealed class AppUser : IdentityUser<Guid>
     public string? DisplayName { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
+
+    /// <summary>Staff: set by Admin with a temporary password; sign-in is refused until the user picks their own.</summary>
+    public bool MustChangePassword { get; set; }
+
+    /// <summary>Staff: switched off by Admin (also locked out and all sessions revoked).</summary>
+    public bool IsDeactivated { get; set; }
+
+    public DateTime? LastLoginAtUtc { get; set; }
 }
 
 internal sealed class AppRole : IdentityRole<Guid>

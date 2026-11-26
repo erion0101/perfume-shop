@@ -28,4 +28,8 @@ public static class PlatformClaims
     public const string Subject = "sub";
     public const string Role = "role";
     public const string CustomerId = "customer_id";
+    public const string Email = "email";
+
+    /// <summary>"true" when the user signed in with a second factor (authenticator app).</summary>
+    public const string TwoFactor = "mfa";
 }

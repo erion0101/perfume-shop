@@ -9,6 +9,7 @@
     <ProjectReference Include="..\PerfumeShop.Modules.Payments.Contracts\PerfumeShop.Modules.Payments.Contracts.csproj" />
     <ProjectReference Include="..\..\Orders\PerfumeShop.Modules.Orders.Contracts\PerfumeShop.Modules.Orders.Contracts.csproj" />
     <ProjectReference Include="..\..\Shipping\PerfumeShop.Modules.Shipping.Contracts\PerfumeShop.Modules.Shipping.Contracts.csproj" />
+    <ProjectReference Include="..\..\Administration\PerfumeShop.Modules.Administration.Contracts\PerfumeShop.Modules.Administration.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

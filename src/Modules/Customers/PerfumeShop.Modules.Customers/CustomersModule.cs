@@ -45,7 +45,8 @@ public sealed class CustomersModule : IModule
                 options.Lockout.AllowedForNewUsers = true;
             })
             .AddRoles<AppRole>()
-            .AddEntityFrameworkStores<CustomersDbContext>();
+            .AddEntityFrameworkStores<CustomersDbContext>()
+            .AddTokenProvider<AuthenticatorTokenProvider<AppUser>>(TokenOptions.DefaultAuthenticatorProvider); // TOTP 2FA for staff
 
         services.AddOptions<OtpOptions>()
             .BindConfiguration(OtpOptions.SectionName)
@@ -79,6 +80,11 @@ public sealed class CustomersModule : IModule
         PerfumeShop.Modules.Customers.Features.StaffSession.StaffSessionEndpoint.Map(auth);
         RefreshTokenEndpoint.Map(auth);
         LogoutEndpoint.Map(auth);
+
+        PerfumeShop.Modules.Customers.Features.StaffAccounts.StaffAccountsEndpoint.Map(
+            auth,
+            endpoints.MapGroup("/api/auth/staff").RequireAuthorization(Policies.Staff).WithTags("Staff (my account)"),
+            endpoints.MapGroup("/api/admin/staff").RequireAuthorization(Policies.Admin).WithTags("Staff accounts (admin)"));
 
         var me = endpoints.MapGroup("/api/customers/me").RequireAuthorization(Policies.Customer).WithTags("My account");
         GetMyProfileEndpoint.Map(me);

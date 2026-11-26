@@ -6,6 +6,7 @@ using PerfumeShop.Modules.Catalog.Domain.Brands;
 using PerfumeShop.Modules.Catalog.Domain.Common;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -69,6 +70,7 @@ internal static class CreateBrandEndpoint
         admin.MapPost("/brands", async (CreateBrandRequest request, CreateBrandHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(request, ct)).ToCreated(b => $"/api/admin/catalog/brands/{b.Id}"))
             .WithValidation<CreateBrandRequest>()
+            .Audited("Catalog.Brand.Created", "Brand", "Markë e re")
             .WithName("CreateBrand")
             .Produces<BrandDto>(StatusCodes.Status201Created);
 }

@@ -6,6 +6,7 @@ using PerfumeShop.Modules.Catalog.Domain.Fragrances;
 using PerfumeShop.Modules.Catalog.Features.CreateVariant;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -28,7 +29,7 @@ internal sealed class UpdateVariantValidator : AbstractValidator<UpdateVariantRe
     }
 }
 
-internal sealed class UpdateVariantHandler(CatalogDbContext db) : IHandler
+internal sealed class UpdateVariantHandler(CatalogDbContext db, IAuditLog audit) : IHandler
 {
     public async Task<Result<VariantDto>> HandleAsync(Guid fragranceId, Guid variantId, UpdateVariantRequest request, CancellationToken cancellationToken)
     {
@@ -58,6 +59,8 @@ internal sealed class UpdateVariantHandler(CatalogDbContext db) : IHandler
             return taken.Error;
         }
 
+        var before = fragrance.Variants.FirstOrDefault(v => v.Id == variantId);
+        var (oldPrice, oldCompareAt, oldSku) = (before?.Price?.Amount, before?.CompareAtPrice?.Amount, before?.Sku.Value);
         List<Result> steps = [fragrance.ChangeVariantCodes(variantId, sku.Value, ean.Value)];
         if (price.Value is { } p)
         {
@@ -76,8 +79,27 @@ internal sealed class UpdateVariantHandler(CatalogDbContext db) : IHandler
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        return fragrance.Variants.First(v => v.Id == variantId).ToDto();
+        var after = fragrance.Variants.First(v => v.Id == variantId);
+        var (newPrice, newCompareAt) = (after.Price?.Amount, after.CompareAtPrice?.Amount);
+        var priceChanged = oldPrice != newPrice || oldCompareAt != newCompareAt;
+        await audit.RecordAsync(new AuditEntry(
+            priceChanged ? "Catalog.Variant.PriceChanged" : "Catalog.Variant.Updated",
+            "Variant",
+            variantId.ToString(),
+            priceChanged
+                ? $"{after.Sku.Value}: çmimi {Amount(oldPrice)} → {Amount(newPrice)} EUR"
+                : $"{after.Sku.Value}: varianti u ndryshua",
+            new Dictionary<string, object?>
+            {
+                ["price"] = new { before = oldPrice, after = newPrice },
+                ["compareAtPrice"] = new { before = oldCompareAt, after = newCompareAt },
+                ["sku"] = new { before = oldSku, after = after.Sku.Value },
+                ["fragranceId"] = fragranceId,
+            }), cancellationToken);
+        return after.ToDto();
     }
+
+    private static string Amount(decimal? value) => value?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) ?? "—";
 }
 
 internal static class UpdateVariantEndpoint

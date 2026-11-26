@@ -6,7 +6,11 @@ export interface Session {
   expiresAt: number;
   userId: string;
   email: string;
+  displayName: string | null;
   roles: string[];
+  twoFactorEnabled: boolean;
+  /** Admin without 2FA while it is required: admin pages answer 403 until it is enabled. */
+  twoFactorSetupRequired: boolean;
 }
 
 export function toSession(response: Schema<"StaffSessionResponse">): Session {
@@ -15,7 +19,10 @@ export function toSession(response: Schema<"StaffSessionResponse">): Session {
     expiresAt: Date.parse(response.accessTokenExpiresAtUtc),
     userId: response.userId,
     email: response.email,
+    displayName: response.displayName ?? null,
     roles: response.roles,
+    twoFactorEnabled: response.twoFactorEnabled,
+    twoFactorSetupRequired: response.twoFactorSetupRequired,
   };
 }
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using PerfumeShop.Modules.Catalog.Domain.Fragrances;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -117,6 +118,7 @@ internal static class CreateVariantEndpoint
         admin.MapPost("/fragrances/{id:guid}/variants", async (Guid id, CreateVariantRequest request, CreateVariantHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(id, request, ct)).ToCreated(v => $"/api/admin/catalog/fragrances/{id}/variants/{v.Id}"))
             .WithValidation<CreateVariantRequest>()
+            .Audited("Catalog.Variant.Created", "Fragrance", "Variant i ri")
             .WithName("CreateVariant")
             .Produces<VariantDto>(StatusCodes.Status201Created);
 }

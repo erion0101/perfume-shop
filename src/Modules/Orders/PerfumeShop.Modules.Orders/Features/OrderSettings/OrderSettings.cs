@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using PerfumeShop.Modules.Orders.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -96,6 +97,7 @@ internal static class OrderSettingsEndpoint
         admin.MapPut("/settings", async (UpdateOrderSettingsRequest request, OrderSettingsHandler h, CancellationToken ct) =>
                 (await h.UpdateSettingsAsync(request, ct)).ToOk())
             .WithValidation<UpdateOrderSettingsRequest>()
+            .Audited("Settings.Orders.Updated", "OrderSettings", "Rregullat kundër porosive të rreme u ndryshuan")
             .WithName("UpdateOrderSettings");
 
         admin.MapGet("/delivery-rates", async (OrderSettingsHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListRatesAsync(ct)))
@@ -104,6 +106,7 @@ internal static class OrderSettingsEndpoint
         admin.MapPut("/delivery-rates/{countryCode}", async (string countryCode, UpdateDeliveryRateRequest request, OrderSettingsHandler h, CancellationToken ct) =>
                 (await h.UpdateRateAsync(countryCode, request, ct)).ToOk())
             .WithValidation<UpdateDeliveryRateRequest>()
+            .Audited("Settings.DeliveryRate.Updated", "DeliveryRate", "Tarifa e dërgesës u ndryshua")
             .WithName("UpdateDeliveryRate");
     }
 }

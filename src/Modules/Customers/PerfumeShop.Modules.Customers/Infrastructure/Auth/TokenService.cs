@@ -58,6 +58,16 @@ internal sealed class TokenService(
             claims[PlatformClaims.CustomerId] = customerId.ToString();
         }
 
+        if (user.CustomerId is null && user.Email is { } email)
+        {
+            claims[PlatformClaims.Email] = email; // staff: shown in the audit log
+        }
+
+        if (user.TwoFactorEnabled)
+        {
+            claims[PlatformClaims.TwoFactor] = "true"; // signed in with a second factor (login requires the code)
+        }
+
         var accessToken = Handler.CreateToken(new SecurityTokenDescriptor
         {
             Issuer = jwt.Issuer,
@@ -122,7 +132,7 @@ internal sealed class TokenService(
             return TokenErrors.InvalidRefreshToken;
         }
 
-        if (await users.IsLockedOutAsync(user))
+        if (user.IsDeactivated || await users.IsLockedOutAsync(user))
         {
             await RevokeFamilyAsync(token.FamilyId, RevocationReasons.LockedOut, cancellationToken);
             return TokenErrors.InvalidRefreshToken;

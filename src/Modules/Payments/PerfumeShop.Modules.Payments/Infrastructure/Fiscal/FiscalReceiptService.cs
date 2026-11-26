@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 namespace PerfumeShop.Modules.Payments.Infrastructure.Fiscal;
 
 /// <summary>Section "Payments:Business": the seller printed on receipts. Placeholders until the company data is final.</summary>
+/// <summary>Name, fiscal number, address and phone come from the business profile (Admin → Settings); only TimeZone is configuration.</summary>
 internal sealed class BusinessInfo
 {
     public const string SectionName = "Payments:Business";
@@ -89,5 +90,15 @@ internal sealed class UnconfiguredFiscalReceiptService(ILogger<UnconfiguredFisca
     {
         logger.LogError("Fiscal receipt {Number} for order {Order} NOT issued: {Message}", request.InternalNumber, request.OrderNumber, Message);
         return Task.FromResult(FiscalIssueResult.Failed(Message));
+    }
+}
+
+/// <summary>The business details as they are now: the profile edited by Admin, plus the configured time zone.</summary>
+internal sealed class BusinessDetails(PerfumeShop.Modules.Administration.Contracts.IBusinessProfileApi profile, Microsoft.Extensions.Options.IOptions<BusinessInfo> options)
+{
+    public async Task<BusinessInfo> GetAsync(CancellationToken cancellationToken)
+    {
+        var p = await profile.GetAsync(cancellationToken);
+        return new BusinessInfo { Name = p.ShopName, TaxNumber = p.TaxNumber, Address = p.Address, Phone = p.Phone, TimeZone = options.Value.TimeZone };
     }
 }

@@ -9,6 +9,7 @@ using PerfumeShop.Modules.Shipping.Domain;
 using PerfumeShop.Modules.Shipping.Features.Shared;
 using PerfumeShop.Modules.Shipping.Infrastructure;
 using PerfumeShop.Modules.Shipping.Infrastructure.Couriers;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -30,6 +31,7 @@ internal sealed class CourierFilesHandler(
     ShipmentWorkflow workflow,
     ICourierAdapter adapter,
     IOptions<ShopInfo> shop,
+    ShopDetails shopDetails,
     TimeProvider timeProvider) : IHandler
 {
     /// <summary>Every parcel still waiting for this courier, booked on or before the given Kosovo day.</summary>
@@ -44,7 +46,7 @@ internal sealed class CourierFilesHandler(
         var day = date ?? shop.Value.LocalDay(timeProvider.GetUtcNow().UtcDateTime);
         var shipments = await WaitingAsync(courierId, day, ct);
         var receipts = await workflow.ReceiptStatesAsync([.. shipments.Select(s => s.OrderId)], ct);
-        return adapter.BuildManifest(courier, day, shipments, receipts, shop.Value);
+        return adapter.BuildManifest(courier, day, shipments, receipts, await shopDetails.GetAsync(ct));
     }
 
     /// <summary>The courier picked up the parcels on the manifest.</summary>
@@ -217,6 +219,7 @@ internal static class CourierFilesEndpoint
 
         staff.MapPost("/couriers/{id:guid}/handover", async (Guid id, DateOnly? date, HandoverRequest? request, ClaimsPrincipal user, CourierFilesHandler h, CancellationToken ct) =>
                 (await h.HandOverAsync(id, date, request, user.Actor(), ct)).ToOk())
+            .Audited("Shipping.Manifest.HandedOver", "Courier", "Dorëzimi ditor te korrieri")
             .WithName("HandOverManifest")
             .WithDescription("Every parcel needs an issued sale receipt; otherwise 409 listing them, or overrideMissingReceipt = true with a reason (logged).");
 
@@ -226,6 +229,7 @@ internal static class CourierFilesEndpoint
                 return csv.IsFailure ? csv.Error.ToProblem() : (await h.ImportStatusesAsync(id, csv.Value, user.Actor(), ct)).ToOk();
             })
             .Accepts<string>("text/csv")
+            .Audited("Shipping.StatusFile.Imported", "Courier", "Skedar statusesh i importuar")
             .WithName("ImportCourierStatuses")
             .WithDescription("CSV body: tracking_number;status;note");
     }

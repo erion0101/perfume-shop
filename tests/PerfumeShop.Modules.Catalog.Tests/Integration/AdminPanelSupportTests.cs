@@ -61,6 +61,20 @@ public sealed class AdminPanelSupportTests(CatalogApiFactory factory)
     }
 
     [Fact]
+    public async Task Price_changes_are_audited_with_before_and_after()
+    {
+        var (fragrance, variant) = await PublishedKhamrahAsync(_admin, price: 39.90m);
+
+        var updated = await _admin.PutJsonAsync($"{Admin}/fragrances/{fragrance.Id}/variants/{variant.Id}", new { sku = variant.Sku, price = 42.90m });
+        Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+
+        var audit = System.Text.Json.Nodes.JsonNode.Parse(await (await _admin.GetTestAsync($"/api/admin/audit?action=Catalog.Variant.PriceChanged&entityId={variant.Id}")).Content.ReadAsStringAsync(Ct))!;
+        var entry = audit["items"]![0]!;
+        Assert.EndsWith("çmimi 39.90 → 42.90 EUR", entry["summary"]!.GetValue<string>(), StringComparison.Ordinal);
+        Assert.Equal(ApiFactory.AdminEmail, entry["actorEmail"]!.GetValue<string>());
+    }
+
+    [Fact]
     public async Task Numbers_sent_as_strings_are_rejected()
     {
         var fragrance = await ImportKhamrahAsync(_admin);

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using PerfumeShop.Modules.Payments.Domain;
 using PerfumeShop.Modules.Payments.Infrastructure;
 using PerfumeShop.Modules.Payments.Infrastructure.Fiscal;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -60,7 +61,7 @@ internal static class ReceiptMappings
         [.. r.Attempts.OrderBy(a => a.AttemptedAtUtc).Select(a => new ReceiptAttemptDto(a.AttemptedAtUtc, a.Provider, a.Succeeded, a.Error, a.RequestJson, a.ResponseJson))]);
 }
 
-internal sealed class ReceiptsHandler(PaymentsDbContext db, ReceiptIssuer issuer, IOptions<BusinessInfo> business) : IHandler
+internal sealed class ReceiptsHandler(PaymentsDbContext db, ReceiptIssuer issuer, BusinessDetails business) : IHandler
 {
     private static readonly Error NotFound = Error.NotFound("Payments.Receipt.NotFound", "Receipt not found.");
 
@@ -98,7 +99,7 @@ internal sealed class ReceiptsHandler(PaymentsDbContext db, ReceiptIssuer issuer
     public async Task<Result<string>> PrintAsync(Guid id, CancellationToken ct)
     {
         var receipt = await db.Receipts.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
-        return receipt is null ? NotFound : ReceiptPrint.Render(receipt, business.Value);
+        return receipt is null ? NotFound : ReceiptPrint.Render(receipt, await business.GetAsync(ct));
     }
 
     /// <summary>Sends a Failed (or stuck Pending) receipt to the provider again; the previous attempts stay in the history.</summary>
@@ -140,6 +141,7 @@ internal static class ReceiptsEndpoint
             .WithName("PrintReceipt");
 
         staff.MapPost("/receipts/{id:guid}/retry", async (Guid id, ReceiptsHandler h, CancellationToken ct) => (await h.RetryAsync(id, ct)).ToOk())
+            .Audited("Payments.Receipt.Retried", "Receipt", "Kuponi u provua përsëri")
             .WithName("RetryFailedReceipt");
     }
 }

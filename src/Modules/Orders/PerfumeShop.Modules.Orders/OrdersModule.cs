@@ -65,6 +65,7 @@ public sealed class OrdersModule : IModule
 
         var staff = endpoints.MapGroup("/api/admin/orders").RequireAuthorization(Policies.Staff).WithTags("Orders (staff)");
         ListOrdersEndpoint.Map(staff);
+        PerfumeShop.Modules.Orders.Features.Dashboard.DashboardEndpoint.Map(staff);
         PerfumeShop.Modules.Orders.Features.CustomerHistory.CustomerHistoryEndpoint.Map(staff);
         GetOrderEndpoint.Map(staff);
         ChangeOrderStatusEndpoint.Map(staff);

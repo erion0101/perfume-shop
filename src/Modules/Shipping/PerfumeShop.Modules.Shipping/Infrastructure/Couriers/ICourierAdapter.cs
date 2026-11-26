@@ -39,3 +39,13 @@ internal sealed class ShopInfo
     /// <summary>"Today" for manifests is a Kosovo calendar day.</summary>
     public string TimeZone { get; set; } = "Europe/Belgrade";
 }
+
+/// <summary>Shop name, phone and address from the business profile (Admin → Settings); TimeZone stays configuration.</summary>
+internal sealed class ShopDetails(PerfumeShop.Modules.Administration.Contracts.IBusinessProfileApi profile, Microsoft.Extensions.Options.IOptions<ShopInfo> options)
+{
+    public async Task<ShopInfo> GetAsync(CancellationToken cancellationToken)
+    {
+        var p = await profile.GetAsync(cancellationToken);
+        return new ShopInfo { Name = p.ShopName, Phone = p.Phone, Address = p.Address, TimeZone = options.Value.TimeZone };
+    }
+}

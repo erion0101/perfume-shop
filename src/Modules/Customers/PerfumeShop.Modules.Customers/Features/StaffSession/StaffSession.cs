@@ -16,14 +16,17 @@ using PerfumeShop.Shared.Kernel;
 namespace PerfumeShop.Modules.Customers.Features.StaffSession;
 
 /// <summary>What the admin panel keeps in memory. The refresh token is never in the body: it lives in an HttpOnly cookie.</summary>
-internal sealed record StaffSessionResponse(string AccessToken, DateTime AccessTokenExpiresAtUtc, Guid UserId, string Email, IReadOnlyList<string> Roles);
+/// <param name="TwoFactorSetupRequired">An Admin without 2FA while 2FA is required: only staff pages work until it is enabled.</param>
+internal sealed record StaffSessionResponse(
+    string AccessToken, DateTime AccessTokenExpiresAtUtc, Guid UserId, string Email, string? DisplayName, IReadOnlyList<string> Roles,
+    bool TwoFactorEnabled, bool TwoFactorSetupRequired);
 
 /// <summary>
 /// Browser sessions for the admin panel. Login and refresh set the rotating refresh token as an HttpOnly,
 /// Secure, SameSite=Strict cookie limited to this path, so JavaScript (and XSS) can never read it.
 /// Every call needs the <see cref="ClientHeader"/> header, which a cross-site form cannot send (CSRF).
 /// </summary>
-internal sealed class StaffSessionHandler(StaffLoginHandler login, TokenService tokens, UserManager<AppUser> users) : IHandler
+internal sealed class StaffSessionHandler(StaffLoginHandler login, TokenService tokens, UserManager<AppUser> users, Microsoft.Extensions.Options.IOptionsMonitor<StaffSecurityOptions> security) : IHandler
 {
     public const string CookieName = "ps_staff_rt";
     public const string CookiePath = "/api/auth/staff/session";
@@ -93,7 +96,8 @@ internal sealed class StaffSessionHandler(StaffLoginHandler login, TokenService 
             Expires = refreshExpires,
             IsEssential = true,
         });
-        return new StaffSessionResponse(accessToken, accessExpires, user.Id, user.Email ?? string.Empty, [.. roles.Order()]);
+        var setupRequired = roles.Contains(Roles.Admin) && security.CurrentValue.RequireTwoFactorForAdmins && !user.TwoFactorEnabled;
+        return new StaffSessionResponse(accessToken, accessExpires, user.Id, user.Email ?? string.Empty, user.DisplayName, [.. roles.Order()], user.TwoFactorEnabled, setupRequired);
     }
 
     private static void ClearCookie(HttpContext http) =>

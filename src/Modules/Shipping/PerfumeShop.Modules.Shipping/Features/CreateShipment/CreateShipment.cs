@@ -8,6 +8,7 @@ using PerfumeShop.Modules.Orders.Contracts;
 using PerfumeShop.Modules.Shipping.Domain;
 using PerfumeShop.Modules.Shipping.Features.Shared;
 using PerfumeShop.Modules.Shipping.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -112,6 +113,7 @@ internal static class CreateShipmentEndpoint
                     : (IResult)TypedResults.Created($"/api/admin/shipping/shipments/{result.Value.Shipment.Id}", result.Value.Shipment);
             })
             .WithValidation<CreateShipmentRequest>()
+            .Audited("Shipping.Shipment.Created", "Shipment", "Dërgesë e re")
             .WithName("CreateShipment")
             .Produces<ShipmentDto>(StatusCodes.Status201Created);
 }

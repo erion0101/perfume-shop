@@ -7,10 +7,10 @@ internal sealed class NotificationOptions
 {
     public const string SectionName = "Notifications";
 
-    /// <summary>{{shopName}} in templates (also the SMS sender name to register with the provider).</summary>
+    /// <summary>Fallback only: {{shopName}} comes from the business profile (Admin → Settings).</summary>
     public string ShopName { get; set; } = "PerfumeShop";
 
-    /// <summary>{{shopPhone}} in templates.</summary>
+    /// <summary>Fallback only: {{shopPhone}} comes from the business profile.</summary>
     public string ShopPhone { get; set; } = "+383 44 000 000";
 
     public string TimeZone { get; set; } = "Europe/Belgrade";
@@ -37,4 +37,16 @@ internal sealed class NotificationOptions
         && TimeOnly.TryParseExact(QuietHoursEnd, "HH:mm", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _)
         && DispatchBatchSize is >= 1 and <= 500
         && !string.IsNullOrWhiteSpace(ShopName);
+
+    /// <summary>A copy with the shop name and phone from the business profile.</summary>
+    public NotificationOptions WithShop(PerfumeShop.Modules.Administration.Contracts.BusinessProfileDto profile) => new()
+    {
+        ShopName = string.IsNullOrWhiteSpace(profile.ShopName) ? ShopName : profile.ShopName,
+        ShopPhone = string.IsNullOrWhiteSpace(profile.Phone) ? ShopPhone : profile.Phone,
+        TimeZone = TimeZone,
+        QuietHoursStart = QuietHoursStart,
+        QuietHoursEnd = QuietHoursEnd,
+        DispatchBatchSize = DispatchBatchSize,
+        DevelopmentSmsFile = DevelopmentSmsFile,
+    };
 }

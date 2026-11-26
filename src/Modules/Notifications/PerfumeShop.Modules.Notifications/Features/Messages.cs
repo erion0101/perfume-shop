@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PerfumeShop.Modules.Notifications.Domain;
 using PerfumeShop.Modules.Notifications.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Auth;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
@@ -156,6 +157,7 @@ internal static class MessagesEndpoint
 
         staff.MapPost("/messages/{id:guid}/resend", async (Guid id, ClaimsPrincipal user, MessagesHandler h, CancellationToken ct) =>
                 (await h.ResendAsync(id, user.GetUserId()?.ToString() ?? "unknown", ct)).ToOk())
+            .Audited("Notifications.Message.Resent", "NotificationMessage", "Njoftimi u ridërgua")
             .WithName("ResendNotificationMessage")
             .WithDescription("Failed messages only (409 otherwise).");
     }

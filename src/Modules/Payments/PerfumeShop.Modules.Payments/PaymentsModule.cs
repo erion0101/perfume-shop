@@ -49,6 +49,7 @@ public sealed class PaymentsModule : IModule
             services.AddScoped<IFiscalReceiptService, UnconfiguredFiscalReceiptService>();
         }
 
+        services.AddScoped<BusinessDetails>();
         services.AddScoped<ReceiptNumbers>();
         services.AddScoped<ReceiptIssuer>();
         services.AddScoped<IPaymentsApi, PaymentsApi>();

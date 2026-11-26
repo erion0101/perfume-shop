@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -36,5 +37,6 @@ internal static class DeleteBrandEndpoint
     public static void Map(RouteGroupBuilder admin) =>
         admin.MapDelete("/brands/{id:guid}", async (Guid id, DeleteBrandHandler handler, CancellationToken ct) =>
                 (await handler.HandleAsync(id, ct)).ToNoContent())
+            .Audited("Catalog.Brand.Deleted", "Brand", "Marka u fshi")
             .WithName("DeleteBrand");
 }

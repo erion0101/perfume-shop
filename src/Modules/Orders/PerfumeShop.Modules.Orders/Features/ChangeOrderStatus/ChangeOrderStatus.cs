@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using PerfumeShop.Modules.Orders.Domain;
 using PerfumeShop.Modules.Orders.Features.Shared;
 using PerfumeShop.Modules.Orders.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -36,10 +37,12 @@ internal static class ChangeOrderStatusEndpoint
     {
         staff.MapPost("/{id:guid}/confirm", async (Guid id, ClaimsPrincipal user, ChangeOrderStatusHandler h, CancellationToken ct) =>
                 (await h.ConfirmAsync(id, user.StaffActor(), ct)).ToOk())
+            .Audited("Orders.Order.Confirmed", "Order", "Porosia u konfirmua")
             .WithName("ConfirmOrder");
 
         staff.MapPost("/{id:guid}/cancel", async (Guid id, ReasonRequest request, ClaimsPrincipal user, ChangeOrderStatusHandler h, CancellationToken ct) =>
                 (await h.CancelAsync(id, user.StaffActor(), request.Reason, ct)).ToOk())
+            .Audited("Orders.Order.Cancelled", "Order", "Porosia u anulua nga stafi")
             .WithName("CancelOrder");
     }
 }

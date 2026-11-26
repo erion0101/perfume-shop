@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\PerfumeShop.Testing\PerfumeShop.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Administration\PerfumeShop.Modules.Administration\PerfumeShop.Modules.Administration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -53,7 +53,7 @@ internal sealed class ReceiptNumbers(PaymentsDbContext db)
 internal sealed class ReceiptIssuer(
     PaymentsDbContext db,
     IFiscalReceiptService provider,
-    IOptions<BusinessInfo> business,
+    BusinessDetails business,
     TimeProvider timeProvider,
     ILogger<ReceiptIssuer> logger)
 {
@@ -78,10 +78,11 @@ internal sealed class ReceiptIssuer(
             originalFiscalNumber = await db.Receipts.Where(r => r.Id == originalId).Select(r => r.FiscalNumber).FirstOrDefaultAsync(cancellationToken);
         }
 
+        var info = await business.GetAsync(cancellationToken);
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var request = new FiscalReceiptRequest(
             receipt.Id, receipt.InternalNumber, receipt.Kind.ToString(), receipt.OrderNumber, originalFiscalNumber,
-            business.Value.Name, business.Value.TaxNumber,
+            info.Name, info.TaxNumber,
             [.. receipt.Lines.Select(l => new FiscalLineRequest(l.Description, l.Sku, l.Quantity, l.UnitPrice, l.LineTotal, l.VatRate, l.VatAmount))],
             [.. receipt.VatBreakdown.Select(v => new FiscalVatRequest(v.Rate, v.Net, v.Vat, v.Gross))],
             receipt.Total, receipt.VatTotal, FiscalReceipt.Currency, receipt.PaymentMethod, now);

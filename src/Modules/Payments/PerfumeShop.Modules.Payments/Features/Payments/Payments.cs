@@ -58,6 +58,9 @@ internal sealed class ListPaymentsValidator : AbstractValidator<ListPaymentsQuer
 /// <param name="OutstandingAtCourier">Now: shipped, not collected yet.</param>
 internal sealed record CourierCashDto(string Courier, int ShippedCount, decimal Expected, int CollectedCount, decimal Collected, decimal Fees, decimal Net, decimal OutstandingAtCourier);
 
+/// <param name="OutstandingAtCouriers">Shipped, cash not collected yet (all couriers).</param>
+internal sealed record PaymentTotalsDto(DateOnly Today, decimal CollectedToday, decimal CollectedThisWeek, DateOnly WeekStart, decimal OutstandingAtCouriers, int FailedReceipts);
+
 internal sealed record DailyCashSummaryDto(DateOnly Date, string Currency, IReadOnlyList<CourierCashDto> Couriers, CourierCashDto Total, int FailedReceipts);
 
 internal sealed class PaymentsHandler(PaymentsDbContext db, IOptions<BusinessInfo> business) : IHandler
@@ -114,6 +117,29 @@ internal sealed class PaymentsHandler(PaymentsDbContext db, IOptions<BusinessInf
     }
 
     /// <summary>One Kosovo calendar day: shipped (to collect) vs collected vs net received, per courier.</summary>
+    /// <summary>Dashboard money figures (Kosovo days; the week starts on Monday).</summary>
+    public async Task<PaymentTotalsDto> TotalsAsync(TimeProvider time, CancellationToken ct)
+    {
+        var today = Today(time);
+        var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+        var (todayStart, weekStart) = (StartUtc(today), StartUtc(monday));
+        var collected = await db.Payments.AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Collected && p.CollectedAtUtc >= weekStart)
+            .Select(p => new { p.CollectedAtUtc, Amount = p.CollectedAmount ?? 0 })
+            .ToListAsync(ct);
+        var outstanding = await db.Payments.AsNoTracking()
+            .Where(p => p.Status == PaymentStatus.Expected && p.ShippedAtUtc != null)
+            .SumAsync(p => (decimal?)p.ExpectedAmount, ct) ?? 0;
+        var failed = await db.Receipts.CountAsync(r => r.Status == ReceiptStatus.Failed, ct);
+        return new PaymentTotalsDto(
+            today,
+            collected.Where(c => c.CollectedAtUtc >= todayStart).Sum(c => c.Amount),
+            collected.Sum(c => c.Amount),
+            monday,
+            outstanding,
+            failed);
+    }
+
     public async Task<DailyCashSummaryDto> DailySummaryAsync(DateOnly day, CancellationToken ct)
     {
         var start = StartUtc(day);
@@ -166,6 +192,10 @@ internal static class PaymentsEndpoint
         staff.MapGet("/", async ([AsParameters] ListPaymentsQuery query, PaymentsHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListAsync(query, ct)))
             .WithValidation<ListPaymentsQuery>()
             .WithName("ListPayments");
+
+        staff.MapGet("/totals", async (PaymentsHandler h, TimeProvider time, CancellationToken ct) => TypedResults.Ok(await h.TotalsAsync(time, ct)))
+            .WithName("PaymentTotals")
+            .WithDescription("Collected today and this week (Kosovo time), cash still at couriers, failed receipts.");
 
         staff.MapGet("/daily-summary", async (DateOnly? date, PaymentsHandler h, TimeProvider time, CancellationToken ct) =>
                 TypedResults.Ok(await h.DailySummaryAsync(date ?? h.Today(time), ct)))

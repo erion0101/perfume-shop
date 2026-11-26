@@ -9,6 +9,7 @@ using PerfumeShop.Modules.Shipping.Domain;
 using PerfumeShop.Modules.Shipping.Features.Shared;
 using PerfumeShop.Modules.Shipping.Infrastructure;
 using PerfumeShop.Modules.Shipping.Infrastructure.Couriers;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -199,6 +200,7 @@ internal static class SettlementsEndpoint
                 return csv.IsFailure ? csv.Error.ToProblem() : (await h.ImportAsync(id, reference, csv.Value, user.Actor(), ct)).ToOk();
             })
             .Accepts<string>("text/csv")
+            .Audited("Shipping.Settlement.Imported", "Courier", "Pasqyrë e korrierit e importuar")
             .WithName("ImportSettlement")
             .WithDescription("CSV body: tracking_number;collected_amount;fee. Re-importing the same file returns the same settlement.");
 

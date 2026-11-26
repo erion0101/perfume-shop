@@ -55,6 +55,20 @@ internal sealed class OrdersApi(OrdersDbContext db, OrderTransitions transitions
             : await db.Orders.AsNoTracking().Where(o => ids.Contains(o.Id)).ToDictionaryAsync(o => o.Id, o => o.Number, cancellationToken);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, CustomerOrderStatsDto>> GetCustomerOrderStatsAsync(IReadOnlyCollection<Guid> customerIds, CancellationToken cancellationToken = default)
+    {
+        var ids = customerIds.Distinct().ToList();
+        return ids.Count == 0
+            ? new Dictionary<Guid, CustomerOrderStatsDto>()
+            : await db.Orders.AsNoTracking().Where(o => ids.Contains(o.CustomerId))
+                .GroupBy(o => o.CustomerId)
+                .Select(g => new { g.Key, Orders = g.Count(), Refused = g.Count(o => o.Status == OrderStatus.Refused) })
+                .ToDictionaryAsync(g => g.Key, g => new CustomerOrderStatsDto(g.Orders, g.Refused), cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetCustomerIdsWithRefusalsAsync(CancellationToken cancellationToken = default) =>
+        await db.Orders.AsNoTracking().Where(o => o.Status == OrderStatus.Refused).Select(o => o.CustomerId).Distinct().ToListAsync(cancellationToken);
+
     internal static OrderSummaryDto? ToDto(Order? o) => o is null
         ? null
         : new OrderSummaryDto(

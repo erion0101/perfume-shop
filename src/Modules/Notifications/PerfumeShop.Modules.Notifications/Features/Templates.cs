@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PerfumeShop.Modules.Notifications.Domain;
 using PerfumeShop.Modules.Notifications.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Auth;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
@@ -68,20 +69,21 @@ internal sealed class PreviewTemplateValidator : AbstractValidator<PreviewTempla
     }
 }
 
-internal sealed class TemplatesHandler(NotificationsDbContext db, IOptions<NotificationOptions> options) : IHandler
+internal sealed class TemplatesHandler(NotificationsDbContext db, IOptions<NotificationOptions> options, PerfumeShop.Modules.Administration.Contracts.IBusinessProfileApi business) : IHandler
 {
     private static readonly Error NotFound = Error.NotFound("Notifications.Template.NotFound", "Template not found.");
 
     public async Task<IReadOnlyList<TemplateDto>> ListAsync(CancellationToken ct)
     {
         var templates = await db.Templates.AsNoTracking().ToDictionaryAsync(t => t.Key, ct);
-        return [.. TemplateCatalog.All.Where(d => templates.ContainsKey(d.Key)).Select(d => ToDto(templates[d.Key], d))];
+        var shop = await ShopAsync(ct);
+        return [.. TemplateCatalog.All.Where(d => templates.ContainsKey(d.Key)).Select(d => ToDto(templates[d.Key], d, shop))];
     }
 
     public async Task<Result<TemplateDto>> GetAsync(string key, CancellationToken ct)
     {
         var (template, definition) = await FindAsync(key, tracking: false, ct);
-        return template is null ? NotFound : ToDto(template, definition!);
+        return template is null ? NotFound : ToDto(template, definition!, await ShopAsync(ct));
     }
 
     public async Task<Result<TemplateDto>> UpdateAsync(string key, UpdateTemplateRequest request, string actorId, CancellationToken ct)
@@ -99,7 +101,7 @@ internal sealed class TemplatesHandler(NotificationsDbContext db, IOptions<Notif
         }
 
         await db.SaveChangesAsync(ct);
-        return ToDto(template, definition!);
+        return ToDto(template, definition!, await ShopAsync(ct));
     }
 
     public async Task<Result<PreviewDto>> PreviewAsync(string key, PreviewTemplateRequest? request, CancellationToken ct)
@@ -129,16 +131,18 @@ internal sealed class TemplatesHandler(NotificationsDbContext db, IOptions<Notif
             values[name] = value;
         }
 
-        var rendered = NotificationQueue.Render(definition, subject, body, request?.Transliterate ?? template.Transliterate, values, options.Value);
+        var rendered = NotificationQueue.Render(definition, subject, body, request?.Transliterate ?? template.Transliterate, values, options.Value.WithShop(await business.GetAsync(ct)));
         return new PreviewDto(key, definition.Channel.ToString(), rendered.Subject, rendered.Body,
             TemplateText.UsedPlaceholders(body + " " + subject), SmsInfoDto.From(rendered.Sms));
     }
 
-    private TemplateDto ToDto(NotificationTemplate t, TemplateDefinition d)
+    private async Task<NotificationOptions> ShopAsync(CancellationToken ct) => options.Value.WithShop(await business.GetAsync(ct));
+
+    private static TemplateDto ToDto(NotificationTemplate t, TemplateDefinition d, NotificationOptions shop)
     {
         var samples = new Dictionary<string, string>(d.Placeholders, StringComparer.Ordinal);
-        var rendered = NotificationQueue.Render(t, d, samples, options.Value);
-        var raw = d.Channel == NotificationChannel.Sms ? NotificationQueue.Render(d, t.Subject, t.Body, false, samples, options.Value) : null;
+        var rendered = NotificationQueue.Render(t, d, samples, shop);
+        var raw = d.Channel == NotificationChannel.Sms ? NotificationQueue.Render(d, t.Subject, t.Body, false, samples, shop) : null;
         return new TemplateDto(t.Key, t.Channel.ToString(), t.Audience.ToString(), d.Alert?.ToString(), d.Description, t.Subject, t.Body, t.Transliterate, t.IsEnabled,
             [.. d.Placeholders.Select(p => new PlaceholderDto(p.Key, p.Value))], SmsInfoDto.From(rendered.Sms), SmsInfoDto.From(raw?.Sms), t.UpdatedBy, t.UpdatedAtUtc);
     }
@@ -171,6 +175,7 @@ internal static class TemplatesEndpoint
                 (await h.UpdateAsync(key, request, user.GetUserId()?.ToString() ?? "unknown", ct)).ToOk())
             .RequireAuthorization(Policies.Admin)
             .WithValidation<UpdateTemplateRequest>()
+            .Audited("Settings.NotificationTemplate.Updated", "NotificationTemplate", "Shablloni i njoftimit u ndryshua")
             .WithName("UpdateNotificationTemplate")
             .WithDescription("Admin. Unknown placeholders are rejected (400).");
 

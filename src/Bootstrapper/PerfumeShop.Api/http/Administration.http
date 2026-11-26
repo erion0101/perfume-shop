@@ -1,0 +1,112 @@
+### PerfumeShop – Administration: business details, audit log, staff accounts, 2FA
+#
+# Run the API first:  dotnet run --project src/Bootstrapper/PerfumeShop.Api   (http://localhost:5080)
+# Admin endpoints need a token with 2FA (claim "mfa") while Auth:Staff:RequireTwoFactorForAdmins is true (default).
+# Locally without an authenticator: dotnet user-secrets set "Auth:Staff:RequireTwoFactorForAdmins" false
+# With 2FA on, add "twoFactorCode": "123456" (or "recoveryCode") to the sign-in body.
+
+@baseUrl = http://localhost:5080
+@adminEmail = you@example.com
+@adminPassword = change-me
+
+### Sign in (Admin)
+# @name signIn
+POST {{baseUrl}}/api/auth/staff/login
+Content-Type: application/json
+
+{ "email": "{{adminEmail}}", "password": "{{adminPassword}}", "twoFactorCode": null }
+
+@token = {{signIn.response.body.$.accessToken}}
+
+
+################################################################################
+### 1. BUSINESS DETAILS (receipts, packing slips, SMS)
+################################################################################
+
+### Current details (Staff can read); placeholderFields lists what is still an example value
+GET {{baseUrl}}/api/admin/settings/business
+Authorization: Bearer {{token}}
+
+### Update (Admin, audited "Settings.Business.Updated"); taxNumber = NUI, 8-10 digits
+PUT {{baseUrl}}/api/admin/settings/business
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "shopName": "PerfumeShop", "address": "Rr. Adem Jashari 1, Lipjan", "phone": "+383 44 123 456", "email": null, "taxNumber": "811234567" }
+
+
+################################################################################
+### 2. AUDIT LOG (Admin)
+################################################################################
+
+### Latest entries. Filters: Action (exact, or a prefix ending with "." e.g. Catalog.), EntityType, EntityId, Actor, Search, From, To
+GET {{baseUrl}}/api/admin/audit?Action=Catalog.&Page=1&PageSize=50
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 3. STAFF ACCOUNTS (Admin)
+################################################################################
+
+### List (role, active, must change password, 2FA, last login)
+# @name staff
+GET {{baseUrl}}/api/admin/staff
+Authorization: Bearer {{token}}
+
+### Create: the temporary password must be changed at first login
+# @name created
+POST {{baseUrl}}/api/admin/staff
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "displayName": "Blerta", "email": "blerta@example.com", "role": "Staff", "temporaryPassword": "Temp-Password-2026!" }
+
+@staffId = {{created.response.body.$.id}}
+
+### First login: choose a new password (anonymous; sign in afterwards)
+POST {{baseUrl}}/api/auth/staff/password/initial
+Content-Type: application/json
+
+{ "email": "blerta@example.com", "temporaryPassword": "Temp-Password-2026!", "newPassword": "Blerta-Own-Pass-1!", "twoFactorCode": null }
+
+### Reset password (new temporary one, signs the person out)
+POST {{baseUrl}}/api/admin/staff/{{staffId}}/reset-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "temporaryPassword": "Another-Temp-2026!" }
+
+### Deactivate (open sessions end at once) / reactivate
+POST {{baseUrl}}/api/admin/staff/{{staffId}}/deactivate
+Authorization: Bearer {{token}}
+
+###
+POST {{baseUrl}}/api/admin/staff/{{staffId}}/reactivate
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### 4. MY ACCOUNT (any staff user)
+################################################################################
+
+### Me (2FA on/required, recovery codes left)
+GET {{baseUrl}}/api/auth/staff/me
+Authorization: Bearer {{token}}
+
+### Change password
+POST {{baseUrl}}/api/auth/staff/me/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "currentPassword": "{{adminPassword}}", "newPassword": "New-Admin-Password-1!" }
+
+### 2FA step 1: get the key / otpauth URI (scan it in the authenticator app)
+POST {{baseUrl}}/api/auth/staff/me/2fa/setup
+Authorization: Bearer {{token}}
+
+### 2FA step 2: confirm with a code from the app; returns 10 recovery codes (shown once)
+POST {{baseUrl}}/api/auth/staff/me/2fa/enable
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "code": "123456" }

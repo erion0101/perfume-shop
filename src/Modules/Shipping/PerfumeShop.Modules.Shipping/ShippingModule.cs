@@ -41,6 +41,7 @@ public sealed class ShippingModule : IModule
         services.AddScoped<ShipmentWorkflow>();
         services.AddOutbox<ShippingDbContext>();
         services.AddScoped<IShippingApi, ShippingApi>();
+        services.AddScoped<ShopDetails>();
 
         services.AddHandlersFromAssembly(typeof(ShippingModule).Assembly);
         services.AddValidatorsFromAssembly(typeof(ShippingModule).Assembly, includeInternalTypes: true);

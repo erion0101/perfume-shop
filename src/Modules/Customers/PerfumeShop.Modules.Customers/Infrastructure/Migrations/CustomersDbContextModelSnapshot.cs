@@ -418,6 +418,14 @@ namespace PerfumeShop.Modules.Customers.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
 
+                    b.Property<bool>("IsDeactivated")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deactivated");
+
+                    b.Property<DateTime?>("LastLoginAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at_utc");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("lockout_enabled");
@@ -425,6 +433,10 @@ namespace PerfumeShop.Modules.Customers.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("boolean")
+                        .HasColumnName("must_change_password");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PerfumeShop.Modules.Catalog.Features.Shared;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Shared.Infrastructure.Audit;
 using PerfumeShop.Shared.Infrastructure.Http;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Kernel;
@@ -29,10 +30,12 @@ internal static class PublishFragranceEndpoint
     {
         admin.MapPost("/fragrances/{id:guid}/publish", async (Guid id, PublishFragranceHandler handler, CancellationToken ct) =>
                 (await handler.PublishAsync(id, ct)).ToOk())
+            .Audited("Catalog.Fragrance.Published", "Fragrance", "Parfumi u publikua")
             .WithName("PublishFragrance");
 
         admin.MapPost("/fragrances/{id:guid}/unpublish", async (Guid id, PublishFragranceHandler handler, CancellationToken ct) =>
                 (await handler.UnpublishAsync(id, ct)).ToOk())
+            .Audited("Catalog.Fragrance.Unpublished", "Fragrance", "Parfumi u hoq nga dyqani")
             .WithName("UnpublishFragrance");
     }
 }
