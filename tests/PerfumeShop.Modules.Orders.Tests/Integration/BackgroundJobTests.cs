@@ -13,10 +13,25 @@ public sealed class BackgroundJobTests(OrdersApiFactory factory)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
+    /// <summary>One pass of the recurring job: at most <see cref="OutboxProcessor{TContext}.BatchSize"/> messages, oldest first.</summary>
     private async Task<int> DispatchOutboxAsync()
     {
         await using var scope = factory.CreateScope();
         return await scope.ServiceProvider.GetRequiredService<OutboxProcessor<OrdersDbContext>>().ProcessAsync(Ct);
+    }
+
+    /// <summary>
+    /// Other tests share the database and may leave more than one batch queued, so run passes (as the recurring job
+    /// would) until the order's events arrived.
+    /// </summary>
+    private async Task<IReadOnlyList<OrderIntegrationEvent>> DispatchUntilAsync(Guid orderId, Func<IReadOnlyList<OrderIntegrationEvent>, bool> done)
+    {
+        for (var pass = 0; pass < 20 && !done(factory.Events.For(orderId)); pass++)
+        {
+            await DispatchOutboxAsync();
+        }
+
+        return factory.Events.For(orderId);
     }
 
     [Fact]
@@ -38,8 +53,8 @@ public sealed class BackgroundJobTests(OrdersApiFactory factory)
         Assert.Equal("System", expired.Timeline.Last().ActorKind);
         Assert.Equal(2, (await factory.StockAsync(khamrah)).Available);
 
-        await DispatchOutboxAsync();
-        Assert.IsType<OrderExpiredIntegrationEvent>(factory.Events.For(order.Id).Last());
+        var events = await DispatchUntilAsync(order.Id, e => e.Any(x => x is OrderExpiredIntegrationEvent));
+        Assert.IsType<OrderExpiredIntegrationEvent>(events.Last());
     }
 
     [Fact]
@@ -51,7 +66,7 @@ public sealed class BackgroundJobTests(OrdersApiFactory factory)
         await factory.CreateAdminClient().PostJson($"/api/admin/orders/{order.Id}/confirm");
         Assert.True((await factory.OrdersApiAsync(api => api.MarkShippedAsync(order.Id, "Posta e Kosovës", "PK777", "staff-user-1", Ct))).IsSuccess);
 
-        await DispatchOutboxAsync();
+        await DispatchUntilAsync(order.Id, e => e.Count >= 3);
         await DispatchOutboxAsync(); // nothing is delivered twice
 
         var events = factory.Events.For(order.Id);

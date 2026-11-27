@@ -915,6 +915,21 @@ export const sq = {
   },
 
   notifications: {
+    /** Albanian names per template key (the API's description is English, for developers). */
+    templateNames: {
+      "order-placed": "Porosia u pranua",
+      "order-confirmed": "Porosia u konfirmua",
+      "shipment-handed-over": "Pakoja u dorëzua te korrieri",
+      "shipment-delivered": "Pakoja u dorëzua: faleminderit",
+      "order-cancelled": "Porosia u anulua",
+      "order-expired": "Porosia skadoi (pa konfirmim)",
+      "staff-new-order": "Porosi e re",
+      "staff-receipt-failed": "Kupon fiskal i dështuar",
+      "staff-low-stock": "Stok i ulët (çdo ditë)",
+      "staff-unpaid-deliveries": "Dorëzime pa pagesë nga korrieri (çdo ditë)",
+      "staff-job-failed": "Punë në sfond e dështuar",
+      "staff-dead-letter": "Ngjarje e pa përpunuar",
+    } as Record<string, string>,
     templates: "Shabllonet e njoftimeve",
     templatesIntro: "SMS për klientët dhe email për stafin. Shkronjat ë/ç e bëjnë SMS-in Unicode (70 shenja në vend të 160): transliterimi i kthen në e/c.",
     key: "Shablloni",

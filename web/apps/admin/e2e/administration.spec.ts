@@ -35,7 +35,7 @@ test("staff account: created by admin → first login sets a password → enable
   const temporary = await dialog.getByLabel(/Fjalëkalimi i përkohshëm/).inputValue();
   await dialog.getByRole("button", { name: "Krijo" }).click();
   await expect(page.getByText("Llogaria u krijua.")).toBeVisible();
-  await expect(page.getByText(email).first()).toBeVisible();
+  await expect(page.getByText(email).filter({ visible: true }).first()).toBeVisible();
   await signOut(page);
 
   // First login with the temporary password: must choose a new one.
@@ -77,7 +77,7 @@ test("notification template: edit with live preview and save", async ({ page }) 
   try {
     await signIn(page);
     await page.goto("/notifications/templates");
-    await page.getByText("order-confirmed", { exact: true }).click();
+    await page.getByText("order-confirmed", { exact: true }).filter({ visible: true }).first().click();
 
     const preview = page.getByTestId("template-preview");
     await expect(preview).toContainText("PS-2026-000042");
@@ -136,7 +136,7 @@ test("block a customer: the customer can no longer sign in or order", async ({ p
 
   await page.goto("/customers");
   await page.getByPlaceholder("Telefoni ose emri").fill(customer.phone);
-  await page.getByText(customer.phone).first().click();
+  await page.getByText(customer.phone).filter({ visible: true }).first().click();
   await expect(page).toHaveURL(new RegExp(`/customers/${customer.id}$`));
   await page.getByRole("button", { name: "Blloko" }).click();
   const dialog = page.getByRole("dialog");

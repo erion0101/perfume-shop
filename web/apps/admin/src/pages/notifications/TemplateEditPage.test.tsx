@@ -10,7 +10,7 @@ const template = {
   channel: "Sms",
   audience: "Customer",
   alert: null,
-  description: "Porosia u konfirmua",
+  description: "Order confirmed by staff (customer)",
   subject: null,
   body: "{{shopName}}: porosia {{orderNumber}} u konfirmua.",
   transliterate: true,

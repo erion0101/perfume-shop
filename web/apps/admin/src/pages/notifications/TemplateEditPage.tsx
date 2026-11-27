@@ -1,9 +1,9 @@
 import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, ErrorState, LoadingState, TextareaField, TextField, toast } from "@perfumeshop/ui";
 import { ArrowLeft } from "lucide-react";
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { PageHeader } from "@/components/PageHeader";
-import { usePreview, useSaveTemplate, useTemplate, type Template } from "@/features/notifications/api";
+import { templateName, usePreview, useSaveTemplate, useTemplate, type Template } from "@/features/notifications/api";
 import { label, t } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { describeError } from "@/lib/problem";
@@ -18,6 +18,15 @@ function Editor({ template, canEdit }: { template: Template; canEdit: boolean })
   const [transliterate, setTransliterate] = useState(template.transliterate);
   const [enabled, setEnabled] = useState(template.isEnabled);
   const textarea = useRef<HTMLTextAreaElement>(null);
+  /** Caret position to restore once React has written an inserted placeholder into the textarea. */
+  const caret = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (caret.current !== null && textarea.current) {
+      textarea.current.focus();
+      textarea.current.setSelectionRange(caret.current, caret.current);
+      caret.current = null;
+    }
+  }, [body]);
   const draft = useDebounced({ subject: isSms ? null : subject, body, transliterate }, 400);
   const preview = usePreview(template.key, draft);
 
@@ -31,11 +40,8 @@ function Editor({ template, canEdit }: { template: Template; canEdit: boolean })
 
     const start = element.selectionStart ?? body.length;
     const end = element.selectionEnd ?? body.length;
+    caret.current = start + token.length;
     setBody(body.slice(0, start) + token + body.slice(end));
-    requestAnimationFrame(() => {
-      element.focus();
-      element.setSelectionRange(start + token.length, start + token.length);
-    });
   }
 
   async function onSave() {
@@ -142,7 +148,7 @@ export function TemplateEditPage() {
             <ArrowLeft className="size-4" /> {t.notifications.back}
           </Link>
         }
-        title={template.data.description}
+        title={templateName(template.data)}
         description={`${template.data.key} · ${label(t.notifications.channels, template.data.channel)} · ${label(t.notifications.audiences, template.data.audience)}`}
       />
       <Editor key={template.data.updatedAtUtc} template={template.data} canEdit={isAdmin} />

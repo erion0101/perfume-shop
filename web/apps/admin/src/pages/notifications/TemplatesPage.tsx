@@ -2,7 +2,7 @@ import { Badge, DataTable, type BadgeTone } from "@perfumeshop/ui";
 import { AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router";
 import { PageHeader } from "@/components/PageHeader";
-import { useTemplates, type Template } from "@/features/notifications/api";
+import { templateName, useTemplates, type Template } from "@/features/notifications/api";
 import { label, t } from "@/i18n";
 import { describeError } from "@/lib/problem";
 
@@ -34,7 +34,7 @@ export function TemplatesPage() {
             header: t.notifications.key,
             cell: (tpl) => (
               <span className="grid">
-                <span className="font-medium">{tpl.description}</span>
+                <span className="font-medium">{templateName(tpl)}</span>
                 <code className="text-xs text-muted-foreground">{tpl.key}</code>
               </span>
             ),

@@ -1,10 +1,14 @@
 import type { Schema } from "@perfumeshop/api-client";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { t } from "@/i18n";
 import { api, unwrap } from "@/lib/api";
 
 export type Template = Schema<"TemplateDto">;
 export type Message = Schema<"MessageDto">;
 export type Preview = Schema<"PreviewDto">;
+
+/** Albanian name of a template; unknown keys fall back to the API description. */
+export const templateName = (tpl: { key: string; description: string }) => t.notifications.templateNames[tpl.key] ?? tpl.description;
 
 export function useTemplates() {
   return useQuery({ queryKey: ["notifications", "templates"], queryFn: () => unwrap(api.GET("/api/admin/notifications/templates")) });

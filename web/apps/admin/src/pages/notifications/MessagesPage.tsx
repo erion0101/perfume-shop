@@ -3,7 +3,7 @@ import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SearchInput } from "@/components/SearchInput";
-import { useMessages, useResend, useTemplates, type Message } from "@/features/notifications/api";
+import { templateName, useMessages, useResend, useTemplates, type Message } from "@/features/notifications/api";
 import { formatDateTime, label, t } from "@/i18n";
 import { describeError } from "@/lib/problem";
 import { useSearchState } from "@/lib/use-search-state";
@@ -119,7 +119,7 @@ export function MessagesPage() {
               <option value="">{t.notifications.allTemplates}</option>
               {(templates.data ?? []).map((tpl) => (
                 <option key={tpl.key} value={tpl.key}>
-                  {tpl.description}
+                  {templateName(tpl)}
                 </option>
               ))}
             </Select>
