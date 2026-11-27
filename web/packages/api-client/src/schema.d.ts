@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cart/delivery-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDeliveryOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog/brands/{id}": {
         parameters: {
             query?: never;
@@ -271,6 +287,86 @@ export interface paths {
             cookie?: never;
         };
         get: operations["GetFragranceBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListShopBrands"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/brands/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetShopBrand"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetShopFacets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/search/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SearchSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/fragrances/{slug}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetSimilarFragrances"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1769,6 +1865,15 @@ export interface components {
         CancelMyOrderRequest: {
             reason: null | string;
         };
+        CardVariantDto: {
+            /** Format: uuid */
+            id: string;
+            type: string;
+            size: null | components["schemas"]["SizeDto"];
+            price: components["schemas"]["MoneyDto"];
+            compareAtPrice: null | components["schemas"]["MoneyDto"];
+            inStock: boolean;
+        };
         CartItemRequest: {
             /** Format: uuid */
             variantId: string;
@@ -2045,6 +2150,15 @@ export interface components {
             /** Format: double */
             revenue: number;
         };
+        DeliveryOptionDto: {
+            countryCode: string;
+            countryName: string;
+            /** Format: double */
+            fee: number;
+            /** Format: double */
+            freeDeliveryFrom: null | number;
+            currency: string;
+        };
         DeliveryRateDto: {
             countryCode: string;
             countryName: string;
@@ -2056,6 +2170,12 @@ export interface components {
             currency: string;
             /** Format: date-time */
             updatedAtUtc: string;
+        };
+        FacetDto: {
+            value: string;
+            label: string;
+            /** Format: int32 */
+            count: number;
         };
         FragellaSearchItemDto: {
             fragellaId: string;
@@ -2107,6 +2227,8 @@ export interface components {
             createdAtUtc: string;
             /** Format: date-time */
             updatedAtUtc: string;
+            moodOverride: null | string;
+            mood: null | string;
         };
         FragranceAdminListItemDto: {
             /** Format: uuid */
@@ -2148,6 +2270,9 @@ export interface components {
             similarTo: components["schemas"]["SimilarFragranceDto"][];
             variants: components["schemas"]["VariantDto"][];
             inStock: boolean;
+            mood: null | string;
+            /** Format: date-time */
+            updatedAtUtc: string;
         };
         FragranceListItemDto: {
             /** Format: uuid */
@@ -2163,6 +2288,10 @@ export interface components {
             topAccords: components["schemas"]["AccordDto"][];
             image: null | components["schemas"]["ImageDto"];
             inStock: boolean;
+            mood: null | string;
+            defaultVariant: components["schemas"]["CardVariantDto"];
+            /** Format: int32 */
+            variantCount: number;
         };
         /** @enum {unknown} */
         Gender: "Male" | "Female" | "Unisex" | null;
@@ -2302,6 +2431,8 @@ export interface components {
             amount: number;
             currency: string;
         };
+        /** @enum {unknown} */
+        Mood: "Oud" | "Sweet" | "Fresh" | "Spicy" | "Floral" | null;
         MovementDto: {
             /** Format: date-time */
             occurredAtUtc: string;
@@ -2832,6 +2963,11 @@ export interface components {
             fromCache: boolean;
             items: components["schemas"]["FragellaSearchItemDto"][];
         };
+        SearchSuggestionsDto: {
+            query: string;
+            fragrances: components["schemas"]["FragranceListItemDto"][];
+            brands: components["schemas"]["ShopBrandDto"][];
+        };
         /** @enum {string} */
         Season: "Spring" | "Summer" | "Autumn" | "Winter";
         SetLowStockThresholdRequest: {
@@ -2929,6 +3065,38 @@ export interface components {
             source: string;
             actorId: string;
             note: null | string;
+        };
+        ShopBrandDetailsDto: {
+            name: string;
+            slug: string;
+            countryCode: null | string;
+            logoUrl: null | string;
+            description: null | string;
+            /** Format: int32 */
+            fragranceCount: number;
+            /** Format: date-time */
+            updatedAtUtc: string;
+        };
+        ShopBrandDto: {
+            name: string;
+            slug: string;
+            countryCode: null | string;
+            logoUrl: null | string;
+            /** Format: int32 */
+            fragranceCount: number;
+        };
+        ShopFacetsDto: {
+            brands: components["schemas"]["FacetDto"][];
+            moods: components["schemas"]["FacetDto"][];
+            genders: components["schemas"]["FacetDto"][];
+            families: components["schemas"]["FacetDto"][];
+            notes: components["schemas"]["FacetDto"][];
+            /** Format: double */
+            minPrice: null | number;
+            /** Format: double */
+            maxPrice: null | number;
+            /** Format: int32 */
+            total: number;
         };
         /** @enum {unknown} */
         Sillage: "Intimate" | "Moderate" | "Strong" | "Enormous" | null;
@@ -3187,6 +3355,7 @@ export interface components {
             notes: null | components["schemas"]["NotePyramidInput"];
             accords: null | components["schemas"]["AccordInput"][];
             similarTo: null | components["schemas"]["SimilarFragranceInput"][];
+            moodOverride?: null | components["schemas"]["Mood"];
         };
         UpdateMyProfileRequest: {
             fullName: null | string;
@@ -3301,6 +3470,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CartQuoteDto"];
+                };
+            };
+        };
+    };
+    GetDeliveryOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryOptionDto"][];
                 };
             };
         };
@@ -3811,6 +4000,10 @@ export interface operations {
                 MinPrice?: number;
                 MaxPrice?: number;
                 Sort?: string;
+                Mood?: string;
+                Note?: string;
+                InStock?: boolean;
+                Q?: string;
                 Page?: number;
                 PageSize?: number;
             };
@@ -3858,6 +4051,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FragranceDetailsDto"];
+                };
+            };
+        };
+    };
+    ListShopBrands: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopBrandDto"][];
+                };
+            };
+        };
+    };
+    GetShopBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopBrandDetailsDto"];
+                };
+            };
+        };
+    };
+    GetShopFacets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopFacetsDto"];
+                };
+            };
+        };
+    };
+    SearchSuggestions: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchSuggestionsDto"];
+                };
+            };
+        };
+    };
+    GetSimilarFragrances: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FragranceListItemDto"][];
                 };
             };
         };

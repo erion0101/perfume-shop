@@ -24,7 +24,7 @@ Update this list whenever something is added or finished.
 | 9 | **SMS provider** | See #45-#47. Outside Development `UnconfiguredSmsSender` is used: OTP requests return 503 and every notification SMS fails (retried, then `Failed`) until a real provider is implemented. |
 | 10 | **Fiscal receipts: real provider** | Implemented behind `IFiscalReceiptService`, but only with the NON-FISCAL development provider. Outside Development every receipt fails (see #36). Required by law for every sale. |
 | 11 | **Fragella mapping verified with real data** | Mapping is tested against a hand-written sample in the documented format. Check a few real imports (`catalog.fragella_fragrances.raw`) before importing the full range. |
-| 12 | **Meilisearch, R2 images** | In the tech stack, not wired yet. Meilisearch needs a production master key. Email: see #48. |
+| 12 | **R2 images; search engine** | R2 is in the tech stack, not wired yet. Search is PostgreSQL `pg_trgm` behind `ICatalogSearch` (no extra service); move to Meilisearch only if the catalog grows into thousands of products or needs synonyms / Albanian stemming. Email: see #48. |
 
 ## Background jobs (Hangfire)
 
@@ -103,6 +103,10 @@ emails staff (`staff-job-failed`). Still to add:
 | 59 | **New-order alerts in the admin** | The top bar polls Pending orders every 30 s (toast + optional sound). Fine for a few staff; switch to server-sent events if many staff keep the panel open. Sound needs one click on the page first (browser rule). |
 | 60 | **Problem details extensions** | Domain errors can carry details (e.g. `parcels` for a missing receipt). Never put personal data or secrets there: they go to every client that triggers the error. |
 | 61 | **Audit log** | `administration.audit_entries`: who did what (prices, stock, cancellations, receipt overrides, blocks, staff accounts, settings), Admin-only page *Regjistri i veprimeve*. Recording is best effort (a failed audit write is logged, never blocks the action); passwords, codes and tokens are redacted. Decide on retention (e.g. 2 years) and add a cleanup job; entries contain staff emails and customer names. |
+| 63 | **Storefront revalidation secret** | Set `Storefront__RevalidateUrl` (e.g. `https://<shop>/api/revalidate`) and `Storefront__RevalidateSecret` on the API and the same value as `REVALIDATE_SECRET` on the storefront (32+ random chars, env vars only). Without them catalog changes appear on the shop after at most 5 minutes (ISR timer). Stock changes always rely on the timer. |
+| 64 | **Storefront env and images** | `API_URL` (internal URL of the API, never public), `SITE_URL` (canonical https origin), `IMAGE_HOSTS` (Cloudflare R2 public URL once photos move there, see #54). Optional `FEATURED_FRAGRANCE_SLUG` picks "Aroma e javës" (default: newest fragrance with a note pyramid). |
+| 65 | **Storefront texts still placeholders** | `[ADRESA]`, `[TELEFONI]` in the footer, `[PËRSHKRIMI]` for fragrances without an Albanian description, `[PËRSHKRIMI I MARKËS]` for brands. Fill brand and fragrance descriptions in the admin; footer facts come with the content pages (phase 3). |
+| 66 | **Note and accord translations** | Fragella notes are English; the shop translates the common ones (`web/apps/storefront/src/i18n/sq.ts`, `notes` / `accords`). Unknown notes show in English: review the list after the first real imports. |
 | 62 | **Customer blocking** | Blocking needs a reason (audited), revokes the customer's refresh tokens, refuses new OTP codes and new orders at once (see #6 for the access token). |
 | 58 | **E2E in CI** | The `e2e` job uses a Postgres service and the mock Fragella server; it never calls the real Fragella API. Keep it that way (quota). |
 

@@ -24,6 +24,7 @@ internal sealed class BrandConfiguration : IEntityTypeConfiguration<Brand>
 
         builder.HasIndex(b => b.Slug).IsUnique().HasDatabaseName("ux_brands_slug");
         builder.HasIndex(b => b.Name).IsUnique().HasDatabaseName("ux_brands_name");
+        builder.HasIndex(b => b.Name, "ix_brands_name_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
 
         builder.Ignore(b => b.DomainEvents);
     }

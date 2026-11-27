@@ -21,7 +21,7 @@
 | ORM / DB | EF Core + PostgreSQL (one database, **one schema per module**); `jsonb` for notes/accords; `pgvector` later for similarity |
 | Storefront | Next.js (App Router) + TypeScript + Tailwind + shadcn/ui, SSR/ISR for SEO |
 | Admin panel | React + Vite + TypeScript + TanStack Query + shadcn/ui |
-| Search | Meilisearch (filters by brand, note, gender, family, price; typo tolerant) |
+| Search | PostgreSQL `pg_trgm` for v1 (typo tolerant, behind `ICatalogSearch`); Meilisearch later only if the catalog outgrows it |
 | Background jobs | Hangfire (Postgres storage): Fragella imports, emails/SMS, outbox, COD reconciliation |
 | Auth | ASP.NET Identity + phone OTP (reduce fake COD orders) |
 | Images | Cloudflare R2 + resizing (WebP/AVIF) |
@@ -46,7 +46,7 @@
 ```
 PerfumeShop/
 ├── PerfumeShop.sln
-├── docker-compose.yml                 # Postgres, Meilisearch, Seq
+├── docker-compose.yml                 # Postgres, Seq
 ├── Directory.Build.props              # net10.0, nullable, warnings as errors
 ├── src/
 │   ├── Bootstrapper/PerfumeShop.Api/
@@ -118,12 +118,16 @@ and `docs/before-production.md` (everything dev-only or open; keep it up to date
 | Payments | done | one COD payment per order, fiscal receipts (sale at shipment, storno on refusal) behind `IFiscalReceiptService` |
 | Notifications | done | customer SMS + staff alert emails, Albanian templates in the DB, notification log, quiet hours |
 | Admin panel (web/apps/admin) | done | part 1: foundation (login, layout, roles, i18n `sq.ts`, generated client), Catalog, Inventory. Part 2: Orders, Shipping, Payments. Part 3: Customers (list, detail, block/unblock with reason), Staff accounts (create with temporary password, deactivate, reset, last login), My account (password, TOTP 2FA + recovery codes, required for Admin), Audit log, Notifications (templates with segment counts, editor with live preview, log with attempts + resend, staff alert settings), Settings (business details + placeholder banner, delivery fees, anti-fake-order rules, Fragella usage), Dashboard (today, money, alerts, 14-day chart, top sellers, refusal rate) |
-| Storefront (web/apps/storefront) | not started | |
+| Storefront (web/apps/storefront) | phase 1 of 3 done | "Sahara Scents". Phase 1: tokens + layout (header, mobile menu, footer, cart drawer), home, /parfumet with URL filters, /markat, /markat/[slug], /parfum/[slug], /kerko; backend: public brands, facets, mood/note/stock filters, pg_trgm search + suggestions, similar fragrances, delivery options, revalidation. Phase 2: cart page, COD checkout with OTP, account, quiz, authenticity. Phase 3: content/legal, 404/error, SEO, performance, a11y pass |
 
 ### Decisions made so far (binding)
-- **NEVER create or change anything in `web/apps/storefront`** (not even after the admin is finished, not for
-  shared refactors). The storefront will be designed separately later. Shared packages (`web/packages/*`) may change
-  only in ways that keep the storefront building untouched.
+- **Storefront "Sahara Scents"** (`web/apps/storefront`, 2026-11-27): may be built and changed. It follows the approved
+  design `docs/design/home-reference.html` (dark "desert night" look: ground #0C0A08, gold #C8A15A; Marcellus +
+  Instrument Sans), mobile-first, all UI text Albanian in one translation file. Cash on Delivery only. Cart totals,
+  delivery fee and free-delivery progress always come from `POST /api/cart/quote`, never computed in the browser.
+  The public batch check shows only product, brand, "verified" and the receipt month: never supplier names,
+  invoice numbers or costs. Missing business facts are `[PLACEHOLDER]`, never invented. Changes to shared packages
+  (`web/packages/*`) must keep the admin building and its tests passing.
 - **Cash on Delivery only.** No card payments, no gateway. `IPaymentProvider` has only `CashOnDeliveryProvider`.
 - **Shipping owns couriers, tracking and COD settlement.** Every shipping transition of an order (Shipped, Delivered,
   Refused, CashCollected) goes through Shipping, which calls `IOrdersApi`; Orders has no ship/deliver endpoints and never
@@ -158,7 +162,7 @@ and `docs/before-production.md` (everything dev-only or open; keep it up to date
   Money and dates are formatted by hand (decimal comma, Europe/Belgrade), never with browser locale data.
 
 ## First tasks for Claude Code (all done; kept for history)
-1. Scaffold the solution and projects as above (`net10.0`), `Directory.Build.props`, `docker-compose.yml` (Postgres, Meilisearch, Seq).
+1. Scaffold the solution and projects as above (`net10.0`), `Directory.Build.props`, `docker-compose.yml` (Postgres, Seq; Meilisearch later dropped for pg_trgm).
 2. Implement `Shared.Kernel` (Entity, Result, Money, IDomainEvent) and `Shared.Infrastructure` (IModule, in-process event bus, outbox).
 3. Build the **Catalog** module: domain, `CatalogDbContext` with schema `catalog`, migrations, endpoints, and `ImportFromFragella` feature.
 4. Add architecture tests (NetArchTest) for module boundaries.

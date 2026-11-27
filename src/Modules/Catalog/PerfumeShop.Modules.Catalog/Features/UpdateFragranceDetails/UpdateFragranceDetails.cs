@@ -33,7 +33,8 @@ internal sealed record UpdateFragranceDetailsRequest(
     List<Occasion>? Occasions,
     NotePyramidInput? Notes,
     List<AccordInput>? Accords,
-    List<SimilarFragranceInput>? SimilarTo);
+    List<SimilarFragranceInput>? SimilarTo,
+    Mood? MoodOverride = null);
 
 internal sealed class UpdateFragranceDetailsValidator : AbstractValidator<UpdateFragranceDetailsRequest>
 {
@@ -46,6 +47,7 @@ internal sealed class UpdateFragranceDetailsValidator : AbstractValidator<Update
         RuleFor(x => x.OlfactiveFamily).IsInEnum();
         RuleFor(x => x.Longevity).IsInEnum();
         RuleFor(x => x.Sillage).IsInEnum();
+        RuleFor(x => x.MoodOverride).IsInEnum();
         RuleFor(x => x.Description).MaximumLength(10_000);
         RuleFor(x => x.Perfumers).Must(p => p is null || p.Count <= Fragrance.MaxPerfumers);
         RuleForEach(x => x.Perfumers).NotEmpty().MaximumLength(Fragrance.PerfumerMaxLength);
@@ -109,6 +111,7 @@ internal sealed class UpdateFragranceDetailsHandler(CatalogDbContext db) : IHand
             fragrance.UpdateDetails(request.OlfactiveFamily, request.LaunchYear, request.Perfumers ?? [], request.Description),
             fragrance.UpdateProfile(request.Longevity, request.Sillage, seasons, occasions),
             fragrance.SetAccords(accords.Value),
+            fragrance.SetMoodOverride(request.MoodOverride),
             fragrance.SetSimilarTo(similar.Value),
         ];
 

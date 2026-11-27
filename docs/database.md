@@ -62,6 +62,9 @@ Indexes: `ux_brands_slug` (unique), `ux_brands_name` (unique).
 | `occasions` | integer | flags: Day, Night, Office, Casual, Evening, SpecialOccasion |
 | `similar_to` | jsonb | `[{ brandName, name, fragranceId? }]` "smells like" references; `fragranceId` set when we sell it |
 | `status` | text | `Draft`, `Published` |
+| `mood_override` | text null | set by an Admin: `Oud`, `Sweet`, `Fresh`, `Spicy`, `Floral` (the shop's "Çfarë të tërheq më shumë?") |
+| `mood` | text null | effective mood: the override, else derived from family + main accords (`MoodClassifier`) on every save; filled on startup for older rows |
+| `note_keys` | text[] | lower-case note names of all layers (GIN index) for the shop's note filter |
 | `fragella_id` | varchar(100) null | **unique** (NULLs allowed; prevents importing twice) |
 | `fragella_raw` | jsonb null | full Fragella response, kept for re-processing |
 | `fragella_imported_at_utc` | timestamptz null | |
@@ -70,7 +73,7 @@ Indexes: `ux_brands_slug` (unique), `ux_brands_name` (unique).
 
 Indexes: `ux_fragrances_slug` (unique), `ux_fragrances_brand_id_name_concentration` (unique; its
 leading column also serves `brand_id` lookups), `ux_fragrances_fragella_id` (unique),
-`ix_fragrances_status`, `ix_fragrances_notes` (GIN, `jsonb_path_ops`) for note filters in SQL.
+`ix_fragrances_status`, `ix_fragrances_notes` (GIN, `jsonb_path_ops`) for note filters in SQL, `ix_fragrances_mood`, `ix_fragrances_note_keys` (GIN), and trigram GIN indexes `ix_fragrances_name_trgm` / `ix_brands_name_trgm` (extension `pg_trgm`) for the typo-tolerant shop search.
 FK `brand_id → brands.id` is allowed because both tables are in the same schema.
 
 ### `catalog.fragrance_variants` (child of `fragrances`)
@@ -594,3 +597,5 @@ Best effort: a failed write is logged and never fails the action.
 15. **Business details live in the database** (`administration.business_profile`), not in configuration, so the owner can correct them without a deploy; configuration only seeds the first row.
 16. **Audit log is one table for all modules** (`administration.audit_entries`), written through `IAuditLog` from any module, read only by Admin. It never blocks the action it records.
 17. **Admins must use 2FA** (`Auth:Staff:RequireTwoFactorForAdmins`, default true): enforced by the Admin policy through the token's `mfa` claim, so it holds for every admin endpoint, not only the UI.
+18. **Shop search is PostgreSQL `pg_trgm`** (`word_similarity` over brand + name, threshold 0.3) behind `ICatalogSearch`: no extra service for a catalog of a few hundred products. Meilisearch can replace the implementation later without touching features.
+19. **Mood is stored, not computed per request**, so the listing filters it in SQL; an admin override always wins.

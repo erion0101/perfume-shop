@@ -68,3 +68,18 @@ public sealed class QuoteCartTests(OrdersApiFactory factory)
         Assert.False(quote.CanCheckout);
     }
 }
+
+public sealed class DeliveryOptionsTests(OrdersApiFactory factory)
+{
+    [Fact]
+    public async Task Guests_see_where_we_deliver_with_fee_and_free_delivery_threshold()
+    {
+        var response = await factory.CreateClient().Get("/api/cart/delivery-options");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var options = await response.Read<List<PerfumeShop.Modules.Orders.Features.DeliveryOptions.DeliveryOptionDto>>();
+        var kosovo = options[0]; // Kosovo first
+        Assert.Equal(("XK", 2.00m, (decimal?)40.00m, "EUR"), (kosovo.CountryCode, kosovo.Fee, kosovo.FreeDeliveryFrom, kosovo.Currency));
+        Assert.DoesNotContain(options, o => o.CountryCode == "AL"); // seeded disabled
+    }
+}

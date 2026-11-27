@@ -35,6 +35,11 @@ internal sealed class FragranceConfiguration : IEntityTypeConfiguration<Fragranc
         builder.Ignore(f => f.Perfumers);
         builder.Property<List<string>>("_perfumers").HasColumnName("perfumers").IsRequired();
 
+        builder.Property(f => f.MoodOverride).HasConversion<string>().HasMaxLength(EnumMaxLength);
+        builder.Property(f => f.Mood).HasConversion<string>().HasMaxLength(EnumMaxLength);
+        builder.Ignore(f => f.NoteKeys);
+        builder.Property<List<string>>("_noteKeys").HasColumnName("note_keys").IsRequired();
+
         builder.Property(f => f.Notes).HasJsonbConversion().IsRequired();
         builder.Property(f => f.Accords).HasJsonbConversion().IsRequired();
         builder.Property(f => f.SimilarTo).HasJsonbConversion().IsRequired();
@@ -67,6 +72,11 @@ internal sealed class FragranceConfiguration : IEntityTypeConfiguration<Fragranc
             .HasMethod("gin")
             .HasOperators("jsonb_path_ops")
             .HasDatabaseName("ix_fragrances_notes");
+
+        builder.HasIndex(f => f.Mood).HasDatabaseName("ix_fragrances_mood");
+        builder.HasIndex("_noteKeys").HasMethod("gin").HasDatabaseName("ix_fragrances_note_keys");
+        // Typo-tolerant shop search (pg_trgm, see PostgresTrigramCatalogSearch).
+        builder.HasIndex(f => f.Name, "ix_fragrances_name_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
 
         builder.Ignore(f => f.DomainEvents);
     }

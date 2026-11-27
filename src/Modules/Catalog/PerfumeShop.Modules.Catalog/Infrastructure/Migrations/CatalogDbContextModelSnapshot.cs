@@ -22,6 +22,7 @@ namespace PerfumeShop.Modules.Catalog.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("PerfumeShop.Modules.Catalog.Domain.Brands.Brand", b =>
@@ -81,6 +82,12 @@ namespace PerfumeShop.Modules.Catalog.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique()
                         .HasDatabaseName("ux_brands_slug");
+
+                    b.HasIndex(new[] { "Name" }, "ix_brands_name_trgm")
+                        .HasDatabaseName("ix_brands_name");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "ix_brands_name_trgm"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "ix_brands_name_trgm"), new[] { "gin_trgm_ops" });
 
                     b.ToTable("brands", "catalog");
                 });
@@ -142,6 +149,16 @@ namespace PerfumeShop.Modules.Catalog.Infrastructure.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("longevity");
 
+                    b.Property<string>("Mood")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("mood");
+
+                    b.Property<string>("MoodOverride")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("mood_override");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -192,6 +209,11 @@ namespace PerfumeShop.Modules.Catalog.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
 
+                    b.PrimitiveCollection<List<string>>("_noteKeys")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("note_keys");
+
                     b.PrimitiveCollection<List<string>>("_perfumers")
                         .IsRequired()
                         .HasColumnType("text[]")
@@ -210,6 +232,9 @@ namespace PerfumeShop.Modules.Catalog.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_fragrances_fragella_id");
 
+                    b.HasIndex("Mood")
+                        .HasDatabaseName("ix_fragrances_mood");
+
                     b.HasIndex("Notes")
                         .HasDatabaseName("ix_fragrances_notes");
 
@@ -223,9 +248,20 @@ namespace PerfumeShop.Modules.Catalog.Infrastructure.Migrations
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_fragrances_status");
 
+                    b.HasIndex("_noteKeys")
+                        .HasDatabaseName("ix_fragrances_note_keys");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("_noteKeys"), "gin");
+
                     b.HasIndex("BrandId", "Name", "Concentration")
                         .IsUnique()
                         .HasDatabaseName("ux_fragrances_brand_id_name_concentration");
+
+                    b.HasIndex(new[] { "Name" }, "ix_fragrances_name_trgm")
+                        .HasDatabaseName("ix_fragrances_name");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Name" }, "ix_fragrances_name_trgm"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Name" }, "ix_fragrances_name_trgm"), new[] { "gin_trgm_ops" });
 
                     b.ToTable("fragrances", "catalog");
                 });

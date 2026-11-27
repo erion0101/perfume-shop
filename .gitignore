@@ -40,3 +40,6 @@ storybook-static/
 test-results/
 playwright-report/
 .playwright/
+
+# Review screenshots (regenerate: SCREENSHOTS=1 pnpm --filter @perfumeshop/storefront e2e e2e/screenshots.spec.ts)
+docs/screenshots/

@@ -66,7 +66,9 @@ internal sealed record FragranceAdminDto(
     DateTime? FragellaImportedAtUtc,
     IReadOnlyList<VariantDto> Variants,
     DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc);
+    DateTime UpdatedAtUtc,
+    string? MoodOverride,
+    string? Mood);
 
 /// <summary>
 /// Storefront product page: published fragrance, active variants only (cheapest first).
@@ -91,7 +93,9 @@ internal sealed record FragranceDetailsDto(
     IReadOnlyList<string> Occasions,
     IReadOnlyList<SimilarFragranceDto> SimilarTo,
     IReadOnlyList<VariantDto> Variants,
-    bool InStock);
+    bool InStock,
+    string? Mood,
+    DateTime UpdatedAtUtc);
 
 internal static class CatalogDtoMappings
 {
@@ -139,7 +143,9 @@ internal static class CatalogDtoMappings
         f.FragellaImportedAtUtc,
         [.. f.Variants.OrderBy(v => v.CreatedAtUtc).Select(v => v.ToDto())],
         f.CreatedAtUtc,
-        f.UpdatedAtUtc);
+        f.UpdatedAtUtc,
+        f.MoodOverride?.ToString(),
+        f.Mood?.ToString());
 
     public static FragranceDetailsDto ToDetailsDto(this Fragrance f, Brand brand, IReadOnlyDictionary<Guid, StockAvailabilityDto> stock)
     {
@@ -169,7 +175,9 @@ internal static class CatalogDtoMappings
         FlagNames(f.Occasions),
         [.. f.SimilarTo.Select(ToDto)],
         variants,
-        variants.Any(v => v.InStock == true));
+        variants.Any(v => v.InStock == true),
+        f.Mood?.ToString(),
+        f.UpdatedAtUtc);
 
     /// <summary>Flags as names, e.g. Season.Autumn | Season.Winter → ["Autumn", "Winter"].</summary>
     public static IReadOnlyList<string> FlagNames<TFlags>(TFlags flags)

@@ -35,6 +35,29 @@
         }
       }
     },
+    "/api/cart/delivery-options": {
+      "get": {
+        "tags": [
+          "Cart"
+        ],
+        "operationId": "GetDeliveryOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/catalog/brands/{id}": {
       "get": {
         "tags": [
@@ -815,6 +838,34 @@
             }
           },
           {
+            "name": "Mood",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Note",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "InStock",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "Page",
             "in": "query",
             "schema": {
@@ -880,6 +931,149 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FragranceDetailsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/brands": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "ListShopBrands",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShopBrandDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/brands/{slug}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "GetShopBrand",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopBrandDetailsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/facets": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "GetShopFacets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopFacetsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/search/suggestions": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "SearchSuggestions",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchSuggestionsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/fragrances/{slug}/similar": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "GetSimilarFragrances",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FragranceListItemDto"
+                  }
                 }
               }
             }
@@ -5281,6 +5475,52 @@
           }
         }
       },
+      "CardVariantDto": {
+        "required": [
+          "id",
+          "type",
+          "size",
+          "price",
+          "compareAtPrice",
+          "inStock"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "size": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              }
+            ]
+          },
+          "price": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "compareAtPrice": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
       "CartItemRequest": {
         "required": [
           "variantId",
@@ -6291,6 +6531,38 @@
           }
         }
       },
+      "DeliveryOptionDto": {
+        "required": [
+          "countryCode",
+          "countryName",
+          "fee",
+          "freeDeliveryFrom",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "type": "string"
+          },
+          "countryName": {
+            "type": "string"
+          },
+          "fee": {
+            "type": "number",
+            "format": "double"
+          },
+          "freeDeliveryFrom": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          }
+        }
+      },
       "DeliveryRateDto": {
         "required": [
           "countryCode",
@@ -6329,6 +6601,26 @@
           "updatedAtUtc": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "FacetDto": {
+        "required": [
+          "value",
+          "label",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -6437,7 +6729,9 @@
           "fragellaImportedAtUtc",
           "variants",
           "createdAtUtc",
-          "updatedAtUtc"
+          "updatedAtUtc",
+          "moodOverride",
+          "mood"
         ],
         "type": "object",
         "properties": {
@@ -6553,6 +6847,18 @@
           "updatedAtUtc": {
             "type": "string",
             "format": "date-time"
+          },
+          "moodOverride": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mood": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6638,7 +6944,9 @@
           "occasions",
           "similarTo",
           "variants",
-          "inStock"
+          "inStock",
+          "mood",
+          "updatedAtUtc"
         ],
         "type": "object",
         "properties": {
@@ -6733,6 +7041,16 @@
           },
           "inStock": {
             "type": "boolean"
+          },
+          "mood": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAtUtc": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -6749,7 +7067,10 @@
           "fromPrice",
           "topAccords",
           "image",
-          "inStock"
+          "inStock",
+          "mood",
+          "defaultVariant",
+          "variantCount"
         ],
         "type": "object",
         "properties": {
@@ -6802,6 +7123,19 @@
           },
           "inStock": {
             "type": "boolean"
+          },
+          "mood": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultVariant": {
+            "$ref": "#/components/schemas/CardVariantDto"
+          },
+          "variantCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -7340,6 +7674,16 @@
             "type": "string"
           }
         }
+      },
+      "Mood": {
+        "enum": [
+          "Oud",
+          "Sweet",
+          "Fresh",
+          "Spicy",
+          "Floral",
+          null
+        ]
       },
       "MovementDto": {
         "required": [
@@ -9264,6 +9608,31 @@
           }
         }
       },
+      "SearchSuggestionsDto": {
+        "required": [
+          "query",
+          "fragrances",
+          "brands"
+        ],
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "fragrances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FragranceListItemDto"
+            }
+          },
+          "brands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShopBrandDto"
+            }
+          }
+        }
+      },
       "Season": {
         "enum": [
           "Spring",
@@ -9615,6 +9984,149 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ShopBrandDetailsDto": {
+        "required": [
+          "name",
+          "slug",
+          "countryCode",
+          "logoUrl",
+          "description",
+          "fragranceCount",
+          "updatedAtUtc"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fragranceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updatedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ShopBrandDto": {
+        "required": [
+          "name",
+          "slug",
+          "countryCode",
+          "logoUrl",
+          "fragranceCount"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fragranceCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ShopFacetsDto": {
+        "required": [
+          "brands",
+          "moods",
+          "genders",
+          "families",
+          "notes",
+          "minPrice",
+          "maxPrice",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "brands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetDto"
+            }
+          },
+          "moods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetDto"
+            }
+          },
+          "genders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetDto"
+            }
+          },
+          "families": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetDto"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FacetDto"
+            }
+          },
+          "minPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "maxPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -10671,6 +11183,16 @@
             "items": {
               "$ref": "#/components/schemas/SimilarFragranceInput"
             }
+          },
+          "moodOverride": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Mood"
+              }
+            ]
           }
         }
       },

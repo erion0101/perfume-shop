@@ -20,6 +20,7 @@ internal sealed class Fragrance : AggregateRoot<Guid>, IAuditable
 
     private readonly List<FragranceVariant> _variants = [];
     private List<string> _perfumers = [];
+    private List<string> _noteKeys = [];
 
     private Fragrance() { }
 
@@ -66,6 +67,15 @@ internal sealed class Fragrance : AggregateRoot<Guid>, IAuditable
     public Occasion Occasions { get; private set; }
 
     public IReadOnlyList<FragranceReference> SimilarTo { get; private set; } = [];
+
+    /// <summary>Set by an admin; wins over the derived mood.</summary>
+    public Mood? MoodOverride { get; private set; }
+
+    /// <summary>Effective mood (override, else derived from family + accords). Stored so the shop can filter on it.</summary>
+    public Mood? Mood { get; private set; }
+
+    /// <summary>Lower-case note names of all layers, for the shop's note filter.</summary>
+    public IReadOnlyList<string> NoteKeys => _noteKeys.AsReadOnly();
 
     public FragranceStatus Status { get; private set; }
 
@@ -154,6 +164,7 @@ internal sealed class Fragrance : AggregateRoot<Guid>, IAuditable
         LaunchYear = launchYear;
         _perfumers = names;
         Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        RefreshMood();
         return Result.Success();
     }
 
@@ -174,7 +185,27 @@ internal sealed class Fragrance : AggregateRoot<Guid>, IAuditable
         return Result.Success();
     }
 
-    public void SetNotes(NotePyramid notes) => Notes = notes;
+    public void SetNotes(NotePyramid notes)
+    {
+        Notes = notes;
+        _noteKeys = [.. notes.Top.Concat(notes.Heart).Concat(notes.Base).Select(n => n.Name.ToLowerInvariant()).Distinct()];
+    }
+
+    /// <summary>Null clears the override (the mood is derived again).</summary>
+    public Result SetMoodOverride(Mood? mood)
+    {
+        if (mood is { } m && !Enum.IsDefined(m))
+        {
+            return Result.Failure(FragranceErrors.InvalidMood);
+        }
+
+        MoodOverride = mood;
+        RefreshMood();
+        return Result.Success();
+    }
+
+    /// <summary>Derives the mood again (after a classifier change, or for rows created before moods existed).</summary>
+    public void RefreshMood() => Mood = MoodOverride ?? MoodClassifier.Classify(OlfactiveFamily, Accords);
 
     public Result SetAccords(IEnumerable<Accord> accords)
     {
@@ -191,6 +222,7 @@ internal sealed class Fragrance : AggregateRoot<Guid>, IAuditable
         }
 
         Accords = list;
+        RefreshMood();
         return Result.Success();
     }
 

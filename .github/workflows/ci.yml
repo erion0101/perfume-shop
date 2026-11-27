@@ -67,7 +67,7 @@ jobs:
         run: pnpm build-storybook
 
   e2e:
-    name: E2E (admin, Playwright)
+    name: E2E (admin + storefront, Playwright)
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -115,4 +115,6 @@ jobs:
         if: failure()
         with:
           name: playwright-report
-          path: web/apps/admin/playwright-report
+          path: |
+            web/apps/admin/playwright-report
+            web/apps/storefront/playwright-report

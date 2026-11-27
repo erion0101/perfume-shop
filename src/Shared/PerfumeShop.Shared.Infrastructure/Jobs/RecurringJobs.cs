@@ -63,6 +63,8 @@ public static class BackgroundJobExtensions
         if (!options.Enabled)
         {
             services.AddSingleton<IRecurringJobRegistry, DisabledRecurringJobRegistry>();
+            services.AddSingleton<RecordingBackgroundJobQueue>();
+            services.AddSingleton<IBackgroundJobQueue>(sp => sp.GetRequiredService<RecordingBackgroundJobQueue>());
             return services;
         }
 
@@ -89,6 +91,7 @@ public static class BackgroundJobExtensions
             server.SchedulePollingInterval = TimeSpan.FromSeconds(options.PollingIntervalSeconds);
         });
         services.AddSingleton<IRecurringJobRegistry, HangfireRecurringJobRegistry>();
+        services.AddSingleton<IBackgroundJobQueue, HangfireBackgroundJobQueue>();
         return services;
     }
 

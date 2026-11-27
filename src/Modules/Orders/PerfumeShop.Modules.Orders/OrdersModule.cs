@@ -1,3 +1,4 @@
+using PerfumeShop.Modules.Orders.Features.DeliveryOptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -58,6 +59,7 @@ public sealed class OrdersModule : IModule
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         QuoteCartEndpoint.Map(endpoints);
+        DeliveryOptionsEndpoint.Map(endpoints);
 
         var customer = endpoints.MapGroup("/api/orders").RequireAuthorization(Policies.Customer).WithTags("My orders");
         PlaceOrderEndpoint.Map(customer);

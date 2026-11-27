@@ -21,18 +21,6 @@ services:
       timeout: 5s
       retries: 10
 
-  meilisearch:
-    image: getmeili/meilisearch:v1.58
-    restart: unless-stopped
-    environment:
-      MEILI_ENV: development
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev-master-key-change-me-0123456789}
-      MEILI_NO_ANALYTICS: "true"
-    ports:
-      - "127.0.0.1:7700:7700"
-    volumes:
-      - meili-data:/meili_data
-
   seq:
     image: datalust/seq:2026.1
     restart: unless-stopped
@@ -47,5 +35,4 @@ services:
 
 volumes:
   postgres-data:
-  meili-data:
   seq-data:

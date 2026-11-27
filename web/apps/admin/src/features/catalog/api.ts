@@ -196,5 +196,7 @@ export function toDetailsInput(f: Fragrance): FragranceDetailsInput {
     notes: f.notes,
     accords: f.accords,
     similarTo: f.similarTo,
+    // Always sent: leaving it out would clear the admin's mood choice on every other save.
+    moodOverride: (f.moodOverride ?? null) as FragranceDetailsInput["moodOverride"],
   };
 }

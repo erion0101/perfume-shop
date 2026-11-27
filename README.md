@@ -10,7 +10,7 @@ See [CLAUDE.md](CLAUDE.md) for the full project brief and architecture rules.
 
 - .NET SDK 10 (`global.json` pins `10.0.x`)
 - Node.js 22+ and pnpm (`corepack enable` picks the version from `web/package.json`)
-- Docker (for Postgres, Meilisearch, Seq)
+- Docker (for Postgres and Seq)
 
 ## 1. Infrastructure (Docker)
 
@@ -22,7 +22,6 @@ docker compose up -d
 | Service     | URL                         | Notes                                   |
 |-------------|-----------------------------|-----------------------------------------|
 | PostgreSQL  | `localhost:5432`            | db/user/password: `perfumeshop` (pgvector included) |
-| Meilisearch | http://localhost:7700       | master key in `.env` / compose default  |
 | Seq (logs)  | http://localhost:8341       | ingestion on `localhost:5341`           |
 
 Stop with `docker compose down` (add `-v` to delete the data volumes).
@@ -112,11 +111,22 @@ pnpm dev          # storefront + admin together (Turborepo)
 
 | App        | URL                    | Run alone                                  |
 |------------|------------------------|--------------------------------------------|
-| Storefront | http://localhost:3000  | `pnpm --filter @perfumeshop/storefront dev` |
+| Storefront | http://localhost:3000  | `pnpm --filter @perfumeshop/storefront dev` (needs the API; env in `apps/storefront/.env.example`) |
 | Admin      | http://localhost:5173  | `pnpm --filter @perfumeshop/admin dev`      |
 
 Other commands: `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest), `pnpm storybook`
 (shared components on http://localhost:6006), `pnpm e2e` (Playwright, see below).
+
+### Storefront "Sahara Scents" (web/apps/storefront)
+
+Next.js App Router, Albanian (all texts in `src/i18n/sq.ts`), design `docs/design/home-reference.html`. Server Components
+read the API with `API_URL` (server only); the browser calls `/api/catalog/*` and `/api/cart/*` through same-origin
+rewrites. Catalog pages are cached (ISR, tag `catalog`, 5 min) and rebuilt at once when the API calls
+`POST /api/revalidate` (set `Storefront:RevalidateUrl` + `Storefront:RevalidateSecret` on the API and `REVALIDATE_SECRET`
+here). The cart is kept in localStorage (variant ids and quantities only); every total comes from `POST /api/cart/quote`.
+`pnpm --filter @perfumeshop/storefront e2e` runs its Playwright suite (own API on :5181, database `perfumeshop_e2e_shop`,
+Fragella mock with six perfumes, production build on :3100); `SCREENSHOTS=1 ... e2e e2e/screenshots.spec.ts` writes
+review screenshots to `docs/screenshots/`.
 
 ### Admin panel (web/apps/admin)
 

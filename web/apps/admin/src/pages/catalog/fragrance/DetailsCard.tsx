@@ -3,7 +3,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, SelectField
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { z } from "zod";
 import { toDetailsInput, useUpdateFragrance, type Fragrance, type FragranceDetailsInput } from "@/features/catalog/api";
-import { options, t } from "@/i18n";
+import { label, options, t } from "@/i18n";
 import { applyFieldErrors, describeError } from "@/lib/problem";
 
 const nextYear = new Date().getFullYear() + 1;
@@ -15,6 +15,7 @@ const schema = z.object({
   concentration: z.string().min(1),
   gender: z.string().min(1),
   olfactiveFamily: z.string(),
+  moodOverride: z.string(),
   longevity: z.string(),
   sillage: z.string(),
   launchYear: z.string().refine((v) => v === "" || (/^\d{4}$/.test(v) && Number(v) >= 1900 && Number(v) <= nextYear), t.fragrance.yearInvalid),
@@ -52,6 +53,7 @@ export function DetailsCard({ fragrance }: { fragrance: Fragrance }) {
       concentration: fragrance.concentration,
       gender: fragrance.gender,
       olfactiveFamily: fragrance.olfactiveFamily ?? "",
+      moodOverride: fragrance.moodOverride ?? "",
       longevity: fragrance.longevity ?? "",
       sillage: fragrance.sillage ?? "",
       launchYear: fragrance.launchYear ? String(fragrance.launchYear) : "",
@@ -70,6 +72,7 @@ export function DetailsCard({ fragrance }: { fragrance: Fragrance }) {
       concentration: v.concentration as FragranceDetailsInput["concentration"],
       gender: v.gender as FragranceDetailsInput["gender"],
       olfactiveFamily: (v.olfactiveFamily || null) as FragranceDetailsInput["olfactiveFamily"],
+      moodOverride: (v.moodOverride || null) as FragranceDetailsInput["moodOverride"],
       longevity: (v.longevity || null) as FragranceDetailsInput["longevity"],
       sillage: (v.sillage || null) as FragranceDetailsInput["sillage"],
       launchYear: v.launchYear ? Number(v.launchYear) : null,
@@ -102,6 +105,13 @@ export function DetailsCard({ fragrance }: { fragrance: Fragrance }) {
             <SelectField label={t.fragrance.concentration} required options={options(t.enums.concentration)} {...register("concentration")} />
             <SelectField label={t.fragrance.gender} required options={options(t.enums.gender)} {...register("gender")} />
             <SelectField label={t.fragrance.family} placeholder={t.common.none} options={options(t.enums.family)} {...register("olfactiveFamily")} />
+            <SelectField
+              label={t.fragrance.mood}
+              hint={t.fragrance.moodHint}
+              placeholder={t.fragrance.moodAuto(fragrance.moodOverride || !fragrance.mood ? null : label(t.enums.mood, fragrance.mood))}
+              options={options(t.enums.mood)}
+              {...register("moodOverride")}
+            />
             <SelectField label={t.fragrance.longevity} placeholder={t.common.none} options={options(t.enums.longevity)} {...register("longevity")} />
             <SelectField label={t.fragrance.sillage} placeholder={t.common.none} options={options(t.enums.sillage)} {...register("sillage")} />
             <TextField label={t.fragrance.launchYear} inputMode="numeric" error={formState.errors.launchYear?.message} {...register("launchYear")} />

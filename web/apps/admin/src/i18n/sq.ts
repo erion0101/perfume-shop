@@ -182,6 +182,9 @@ export const sq = {
   },
 
   fragrance: {
+    mood: "Drejtimi në dyqan",
+    moodAuto: (derived: string | null) => (derived ? `Automatik (${derived})` : "Automatik"),
+    moodHint: "Filtri \"Çfarë të tërheq më shumë?\" në dyqan. Automatikisht nga familja dhe akordet; zgjidhni një vlerë vetëm nëse nuk përputhet.",
     backToList: "Te lista",
     details: "Të dhënat",
     notesAndAccords: "Notat dhe akordet",
@@ -1073,6 +1076,7 @@ export const sq = {
   },
 
   enums: {
+    mood: { Oud: "Oud dhe dru", Sweet: "Ëmbël dhe vanilje", Fresh: "Freski", Spicy: "Erëza dhe duhan", Floral: "Lule" } as Record<string, string>,
     fragranceStatus: { Draft: "Draft", Published: "Publikuar" } as Record<string, string>,
     concentration: {
       EauDeParfum: "Eau de Parfum (EDP)",

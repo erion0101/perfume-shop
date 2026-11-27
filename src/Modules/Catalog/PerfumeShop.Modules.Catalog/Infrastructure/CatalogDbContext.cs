@@ -24,4 +24,12 @@ internal sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> option
     public DbSet<FragellaFragranceSnapshot> FragellaFragrances => Set<FragellaFragranceSnapshot>();
 
     protected override string Schema => SchemaName;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Trigram similarity for the shop search (database-wide extension; IF NOT EXISTS in the migration).
+        modelBuilder.HasPostgresExtension("pg_trgm");
+    }
 }

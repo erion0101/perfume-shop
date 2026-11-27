@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { json, mockApi, problem, renderPage } from "@/test/utils";
@@ -28,6 +28,8 @@ const fragrance = {
   variants: [],
   createdAtUtc: "2026-11-26T10:00:00Z",
   updatedAtUtc: "2026-11-26T10:00:00Z",
+  moodOverride: "Oud",
+  mood: "Oud",
 };
 
 describe("FragranceEditPage", () => {
@@ -75,6 +77,23 @@ describe("FragranceEditPage", () => {
       seasons: ["Winter"],
       notes: { top: [{ name: "Cinnamon", imageUrl: null }, { name: "Cardamom", imageUrl: null }], base: [{ name: "Vanilla", imageUrl: null }] },
       accords: [{ name: "warm spicy", percentage: 100 }],
+      moodOverride: "Oud", // kept: saving the notes must not clear the admin's mood choice
     });
+  });
+
+  it("sets the shop mood back to automatic", async () => {
+    const calls = mockApi({
+      "GET /api/admin/catalog/fragrances/{id}": () => json(fragrance),
+      "PUT /api/admin/catalog/fragrances/{id}": (_, body) => json({ ...fragrance, ...(body as object), moodOverride: null, mood: "Spicy" }),
+    });
+    renderPage(<FragranceEditPage />, { path: "/catalog/fragrances/:id", route: "/catalog/fragrances/f1" });
+
+    const mood = await screen.findByLabelText(/Drejtimi në dyqan/);
+    expect(mood).toHaveValue("Oud");
+    await userEvent.selectOptions(mood, "");
+    await userEvent.click(within(screen.getByRole("form", { name: "Të dhënat" })).getByRole("button", { name: "Ruaj" }));
+
+    await waitFor(() => expect(calls.find((c) => c.method === "PUT")?.body).toMatchObject({ moodOverride: null }));
+    expect(await screen.findByRole("option", { name: "Automatik (Erëza dhe duhan)" })).toBeInTheDocument();
   });
 });

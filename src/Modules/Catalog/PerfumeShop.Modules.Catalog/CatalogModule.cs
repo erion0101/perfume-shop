@@ -21,6 +21,7 @@ using PerfumeShop.Modules.Catalog.Features.ListFragrances;
 using PerfumeShop.Modules.Catalog.Features.ListFragrancesAdmin;
 using PerfumeShop.Modules.Catalog.Features.PublishFragrance;
 using PerfumeShop.Modules.Catalog.Features.SearchFragella;
+using PerfumeShop.Modules.Catalog.Features.Shop;
 using PerfumeShop.Modules.Catalog.Features.UpdateBrand;
 using PerfumeShop.Modules.Catalog.Features.UpdateFragranceDetails;
 using PerfumeShop.Modules.Catalog.Features.UpdateVariant;
@@ -28,6 +29,8 @@ using PerfumeShop.Modules.Catalog.Features.UploadImage;
 using PerfumeShop.Modules.Catalog.Infrastructure.Fragella;
 using PerfumeShop.Modules.Catalog.Infrastructure.Images;
 using PerfumeShop.Modules.Catalog.Infrastructure;
+using PerfumeShop.Modules.Catalog.Infrastructure.Search;
+using PerfumeShop.Modules.Catalog.Infrastructure.Storefront;
 using PerfumeShop.Shared.Infrastructure.Auth;
 using PerfumeShop.Shared.Infrastructure.Modules;
 using PerfumeShop.Shared.Infrastructure.Persistence;
@@ -64,7 +67,14 @@ public sealed class CatalogModule : IModule
         services.AddScoped<IFragellaBudget, FragellaBudget>();
         services.AddScoped<FragellaSearchService>();
         services.AddScoped<ICatalogApi, CatalogApi>();
+        services.AddScoped<ICatalogSearch, PostgresTrigramCatalogSearch>();
         services.AddOptions<ImageStorageOptions>().BindConfiguration(ImageStorageOptions.SectionName);
+        services.AddOptions<StorefrontOptions>()
+            .BindConfiguration(StorefrontOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddHttpClient(StorefrontRevalidationJob.HttpClientName, http => http.Timeout = TimeSpan.FromSeconds(10));
+        services.AddScoped<StorefrontRevalidationJob>();
 
         // Local disk storage is for Development only; production needs Cloudflare R2 (not implemented yet).
         if (environment.IsDevelopment())
@@ -80,14 +90,18 @@ public sealed class CatalogModule : IModule
         services.AddValidatorsFromAssembly(typeof(CatalogModule).Assembly, includeInternalTypes: true);
     }
 
-    public Task InitializeAsync(IServiceProvider services, CancellationToken cancellationToken) =>
-        services.MigrateIfEnabledAsync<CatalogDbContext>(cancellationToken);
+    public async Task InitializeAsync(IServiceProvider services, CancellationToken cancellationToken)
+    {
+        await services.MigrateIfEnabledAsync<CatalogDbContext>(cancellationToken);
+        await MoodBackfill.RunAsync(services, cancellationToken);
+    }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var admin = endpoints.MapGroup(AdminRoutePrefix)
             .RequireAuthorization(Policies.Admin)
-            .WithTags("Catalog (admin)");
+            .WithTags("Catalog (admin)")
+            .RevalidatesStorefront();
 
         // Staff read the catalog (e.g. to pick the variant when receiving stock); every change stays Admin-only.
         var staffRead = endpoints.MapGroup(AdminRoutePrefix)
@@ -118,5 +132,6 @@ public sealed class CatalogModule : IModule
 
         ListFragrancesEndpoint.Map(shop);
         GetFragranceBySlugEndpoint.Map(shop);
+        ShopCatalogEndpoints.Map(shop);
     }
 }

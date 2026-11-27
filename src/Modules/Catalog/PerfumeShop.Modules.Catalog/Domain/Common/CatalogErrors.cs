@@ -26,6 +26,7 @@ internal static class FragranceErrors
     public static readonly Error InvalidConcentration = new("Catalog.Fragrance.InvalidConcentration", "Unknown concentration.");
     public static readonly Error InvalidGender = new("Catalog.Fragrance.InvalidGender", "Unknown gender.");
     public static readonly Error InvalidOlfactiveFamily = new("Catalog.Fragrance.InvalidOlfactiveFamily", "Unknown olfactive family.");
+    public static readonly Error InvalidMood = new("Catalog.Fragrance.InvalidMood", "Unknown mood.");
     public static readonly Error InvalidLaunchYear = new("Catalog.Fragrance.InvalidLaunchYear", "Launch year is out of range.");
     public static readonly Error InvalidPerfumer = new("Catalog.Fragrance.InvalidPerfumer", "Perfumer names must be 1-100 characters, max 10 perfumers.");
     public static readonly Error InvalidProfile = new("Catalog.Fragrance.InvalidProfile", "Unknown longevity, sillage, season or occasion.");

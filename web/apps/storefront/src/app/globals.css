@@ -1,4 +1,133 @@
 @import "tailwindcss";
-@import "@perfumeshop/config/tailwind/theme.css";
 
-@source "../../../../packages/ui/src";
+/*
+ * Sahara Scents design tokens (approved prototype docs/design/home-reference.html).
+ * Measured contrast on ground / panel: text 16.0 / 15.2, muted 8.9 / 8.4, subtle 5.3 / 5.1, gold 8.2 / 7.8,
+ * dark text on gold 8.2 (all pass WCAG AA). line-strong (1.9:1) is decoration only; form fields use --color-field
+ * (3.2 / 3.0) so their boundary meets WCAG 1.4.11.
+ */
+@theme {
+  --color-ground: #0c0a08;
+  --color-panel: #15110d;
+  --color-line: #2a231b;
+  --color-line-strong: #4a3e2e;
+  --color-field: #705e45;
+  --color-gold: #c8a15a;
+  --color-gold-light: #e6c98a;
+  --color-gold-hover: #f3dfb0;
+  --color-text: #efe6d6;
+  --color-heading: #f5eddd;
+  --color-soft: #cfc3ae;
+  --color-muted: #b9ac97;
+  --color-subtle: #8f8371;
+  --color-danger: #f2a08a;
+
+  --font-display: var(--font-marcellus), "Marcellus", Georgia, serif;
+  --font-sans: var(--font-instrument), "Instrument Sans", system-ui, sans-serif;
+
+  --radius-arch: 240px 240px 18px 18px;
+  --ease-lift: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-ground);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  a {
+    color: var(--color-gold-light);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-gold-hover);
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-light);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-ground);
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--color-heading);
+  }
+}
+
+@layer components {
+  /* Bottle lift on card hover (the prototype's signature motion). */
+  .bottle {
+    transition: transform 0.5s var(--ease-lift);
+  }
+
+  .card:hover .bottle,
+  .card:focus-within .bottle {
+    transform: translateY(-6px);
+  }
+
+  /* Pressed chip (mood filter): gold with dark text. */
+  .chip[aria-pressed="true"] {
+    background: var(--color-gold);
+    color: var(--color-ground);
+    border-color: var(--color-gold);
+  }
+
+  .page-enter {
+    animation: page-enter 0.35s var(--ease-lift);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
